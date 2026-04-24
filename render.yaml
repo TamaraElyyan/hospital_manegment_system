@@ -1,0 +1,45 @@
+# Render.com Blueprint: New → Blueprint → paste this file from repo.
+# Prerequisite: create a PostgreSQL instance on Render or Neon, then set DATABASE / JDBC vars.
+#
+# After first deploy, set in Render dashboard (Web Service → Environment):
+#   SPRING_DATASOURCE_URL   = jdbc:postgresql://... (from your Postgres provider)
+#   SPRING_DATASOURCE_USERNAME  = (user)
+#   SPRING_DATASOURCE_PASSWORD  = (password) — mark Secret
+#   JWT_SECRET              = long random string — Secret
+#   CORS_ALLOWED_ORIGINS    = https://your-frontend.pages.dev  (or Netlify / Vercel URL)
+
+version: "1"
+services:
+  - type: web
+    name: hospital-api
+    runtime: docker
+    region: oregon
+    plan: free
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /actuator/health
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: postgres,prod
+      - key: PORT
+        value: 8080
+      - key: JPA_SHOW_SQL
+        value: "false"
+      - key: HIBERNATE_FORMAT_SQL
+        value: "false"
+      - key: LOG_LEVEL_COM_HOSPITAL
+        value: INFO
+      - key: LOG_LEVEL_ORG_SECURITY
+        value: WARN
+      - key: SPRING_DATASOURCE_URL
+        sync: false
+      - key: SPRING_DATASOURCE_USERNAME
+        sync: false
+      - key: SPRING_DATASOURCE_PASSWORD
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: CORS_ALLOWED_ORIGINS
+        sync: false
+      - key: FRONTEND_BASE_URL
+        sync: false

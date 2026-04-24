@@ -1,0 +1,14 @@
+# Netlify: Base directory = frontend, or root with "cd frontend && npm run build", publish = frontend/dist
+# Build: set env VITE_API_URL = https://your-api.onrender.com (no trailing slash)
+
+[build]
+  command = "npm ci && npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

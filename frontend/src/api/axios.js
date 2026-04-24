@@ -24,7 +24,10 @@ axiosInstance.interceptors.request.use(
   (config) => {
     const url = config.url || "";
     const isAuthPublic =
-      url.includes("/auth/login") || url.includes("/auth/register");
+      url.includes("/auth/login") ||
+      url.includes("/auth/register") ||
+      url.includes("/auth/forgot-password") ||
+      url.includes("/auth/reset-password");
     if (!isAuthPublic) {
       const token = localStorage.getItem("token");
       if (token) {
@@ -45,7 +48,10 @@ axiosInstance.interceptors.response.use(
     if (error.response?.status === 401) {
       const url = error.config?.url || "";
       const isAuthPublic =
-        url.includes("/auth/login") || url.includes("/auth/register");
+        url.includes("/auth/login") ||
+        url.includes("/auth/register") ||
+        url.includes("/auth/forgot-password") ||
+        url.includes("/auth/reset-password");
       if (!isAuthPublic) {
         localStorage.removeItem("token");
         localStorage.removeItem("user");

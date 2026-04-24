@@ -1,14 +1,14 @@
-# Render.com Blueprint: New → Blueprint → paste this file from repo.
-# Prerequisite: create a PostgreSQL instance on Render or Neon, then set DATABASE / JDBC vars.
+# Render Blueprint — استمر من Dashboard: New → Blueprint → ربط الريبو
 #
-# After first deploy, set in Render dashboard (Web Service → Environment):
-#   SPRING_DATASOURCE_URL   = jdbc:postgresql://... (from your Postgres provider)
-#   SPRING_DATASOURCE_USERNAME  = (user)
-#   SPRING_DATASOURCE_PASSWORD  = (password) — mark Secret
-#   JWT_SECRET              = long random string — Secret
-#   CORS_ALLOWED_ORIGINS    = https://your-frontend.pages.dev  (or Netlify / Vercel URL)
+# ينشئ: PostgreSQL مجاني + ويب (Docker) للـ API
+# بعد أول نشر: أضيفي رابط الواجهة في CORS_ALLOWED_ORIGINS ثم Redeploy
 
 version: "1"
+databases:
+  - name: hospital-db
+    plan: free
+    region: oregon
+
 services:
   - type: web
     name: hospital-api
@@ -31,12 +31,10 @@ services:
         value: INFO
       - key: LOG_LEVEL_ORG_SECURITY
         value: WARN
-      - key: SPRING_DATASOURCE_URL
-        sync: false
-      - key: SPRING_DATASOURCE_USERNAME
-        sync: false
-      - key: SPRING_DATASOURCE_PASSWORD
-        sync: false
+      - key: DATABASE_URL
+        fromDatabase:
+          name: hospital-db
+          property: connectionString
       - key: JWT_SECRET
         generateValue: true
       - key: CORS_ALLOWED_ORIGINS

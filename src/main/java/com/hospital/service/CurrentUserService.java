@@ -23,6 +23,9 @@ public class CurrentUserService {
     @Autowired
     private DoctorRepository doctorRepository;
 
+    @Autowired
+    private PatientRepository patientRepository;
+
     public Optional<String> getCurrentUsername() {
         Authentication a = SecurityContextHolder.getContext().getAuthentication();
         if (a == null || !a.isAuthenticated() || "anonymousUser".equals(a.getPrincipal())) {

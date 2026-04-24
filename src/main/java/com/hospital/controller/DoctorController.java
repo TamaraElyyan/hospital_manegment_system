@@ -2,12 +2,16 @@ package com.hospital.controller;
 
 import com.hospital.model.Doctor;
 import com.hospital.repository.DoctorRepository;
+import com.hospital.service.CurrentUserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/doctors")
@@ -17,16 +21,31 @@ public class DoctorController {
     @Autowired
     private DoctorRepository doctorRepository;
 
+    @Autowired
+    private CurrentUserService currentUserService;
+
     @GetMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR', 'RECEPTIONIST', 'NURSE')")
     public ResponseEntity<List<Doctor>> getAllDoctors() {
+        Optional<Doctor> me = currentUserService.getCurrentDoctor();
+        if (me.isPresent()) {
+            return ResponseEntity.ok(Collections.singletonList(me.get()));
+        }
         return ResponseEntity.ok(doctorRepository.findAll());
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR', 'RECEPTIONIST', 'NURSE')")
     public ResponseEntity<?> getDoctorById(@PathVariable Long id) {
-        return doctorRepository.findById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        Optional<Doctor> opt = doctorRepository.findById(id);
+        if (opt.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        Optional<Doctor> me = currentUserService.getCurrentDoctor();
+        if (me.isPresent() && !me.get().getId().equals(id)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Forbidden");
+        }
+        return ResponseEntity.ok(opt.get());
     }
 
     @GetMapping("/specialization/{specialization}")
@@ -44,6 +63,10 @@ public class DoctorController {
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR')")
     public ResponseEntity<?> updateDoctor(@PathVariable Long id, @RequestBody Doctor doctorDetails) {
+        Optional<Doctor> me = currentUserService.getCurrentDoctor();
+        if (me.isPresent() && !me.get().getId().equals(id)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Forbidden");
+        }
         return doctorRepository.findById(id)
                 .map(doctor -> {
                     doctor.setLicenseNumber(doctorDetails.getLicenseNumber());

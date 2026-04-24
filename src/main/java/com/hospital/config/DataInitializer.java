@@ -3,7 +3,9 @@ package com.hospital.config;
 import com.hospital.model.*;
 import com.hospital.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
@@ -12,6 +14,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Component
+@Profile("!test")
 public class DataInitializer implements CommandLineRunner {
 
     @Autowired
@@ -41,6 +44,9 @@ public class DataInitializer implements CommandLineRunner {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Value("${hospital.dev.reset-admin-credentials:false}")
+    private boolean resetAdminCredentials;
+
     @Override
     public void run(String... args) throws Exception {
         if (userRepository.count() == 0) {
@@ -53,6 +59,7 @@ public class DataInitializer implements CommandLineRunner {
             admin.setRole(Role.ADMIN);
             admin.setAddress("123 Hospital Street");
             admin.setActive(true);
+            admin.setApprovalStatus(AccountApprovalStatus.APPROVED);
             userRepository.save(admin);
 
             Department cardiology = new Department();
@@ -82,6 +89,7 @@ public class DataInitializer implements CommandLineRunner {
             doctorUser.setRole(Role.DOCTOR);
             doctorUser.setAddress("456 Medical Plaza");
             doctorUser.setActive(true);
+            doctorUser.setApprovalStatus(AccountApprovalStatus.APPROVED);
             userRepository.save(doctorUser);
 
             Doctor doctor = new Doctor();
@@ -105,6 +113,7 @@ public class DataInitializer implements CommandLineRunner {
             nurseUser.setRole(Role.NURSE);
             nurseUser.setAddress("789 Care Street");
             nurseUser.setActive(true);
+            nurseUser.setApprovalStatus(AccountApprovalStatus.APPROVED);
             userRepository.save(nurseUser);
 
             User receptionistUser = new User();
@@ -116,6 +125,7 @@ public class DataInitializer implements CommandLineRunner {
             receptionistUser.setRole(Role.RECEPTIONIST);
             receptionistUser.setAddress("321 Front Desk Ave");
             receptionistUser.setActive(true);
+            receptionistUser.setApprovalStatus(AccountApprovalStatus.APPROVED);
             userRepository.save(receptionistUser);
 
             // Add more departments
@@ -138,6 +148,7 @@ public class DataInitializer implements CommandLineRunner {
             doctor2User.setRole(Role.DOCTOR);
             doctor2User.setAddress("789 Medical Center");
             doctor2User.setActive(true);
+            doctor2User.setApprovalStatus(AccountApprovalStatus.APPROVED);
             userRepository.save(doctor2User);
 
             Doctor doctor2 = new Doctor();
@@ -169,6 +180,20 @@ public class DataInitializer implements CommandLineRunner {
             patient1.setEmergencyPhone("+1234567897");
             patient1.setStatus("ACTIVE");
             patient1.setAssignedDoctor(doctor);
+            patientRepository.save(patient1);
+
+            User patientPortalUser = new User();
+            patientPortalUser.setUsername("patient1");
+            patientPortalUser.setEmail("michael.brown@email.com");
+            patientPortalUser.setPassword(passwordEncoder.encode("patient123"));
+            patientPortalUser.setFullName("Michael Brown");
+            patientPortalUser.setPhone("+1234567896");
+            patientPortalUser.setRole(Role.PATIENT);
+            patientPortalUser.setAddress("555 Patient Road");
+            patientPortalUser.setActive(true);
+            patientPortalUser.setApprovalStatus(AccountApprovalStatus.APPROVED);
+            userRepository.save(patientPortalUser);
+            patient1.setUser(patientPortalUser);
             patientRepository.save(patient1);
 
             Patient patient2 = new Patient();
@@ -303,6 +328,7 @@ public class DataInitializer implements CommandLineRunner {
             invoice1.setBalanceAmount(BigDecimal.ZERO);
             invoice1.setPaymentStatus("PAID");
             invoice1.setDescription("Consultation + Lab Tests");
+            invoice1.setAppointment(apt1);
             invoiceRepository.save(invoice1);
 
             Invoice invoice2 = new Invoice();
@@ -315,6 +341,7 @@ public class DataInitializer implements CommandLineRunner {
             invoice2.setBalanceAmount(new BigDecimal("320.00"));
             invoice2.setPaymentStatus("PENDING");
             invoice2.setDescription("Consultation + Medication");
+            invoice2.setAppointment(apt2);
             invoiceRepository.save(invoice2);
 
             Invoice invoice3 = new Invoice();
@@ -328,6 +355,7 @@ public class DataInitializer implements CommandLineRunner {
             invoice3.setBalanceAmount(BigDecimal.ZERO);
             invoice3.setPaymentStatus("PAID");
             invoice3.setDescription("Consultation + Surgery + Room");
+            invoice3.setAppointment(apt3);
             invoiceRepository.save(invoice3);
 
 
@@ -336,6 +364,41 @@ public class DataInitializer implements CommandLineRunner {
             System.out.println("Doctor: username=drjohn, password=doctor123");
             System.out.println("Nurse: username=nurse1, password=nurse123");
             System.out.println("Receptionist: username=receptionist1, password=receptionist123");
+            System.out.println("Patient portal: username=patient1, password=patient123 (Michael Brown / PAT-001)");
+        }
+
+        // قاعدة قديمة: صف users بدون approval_status => APPROVED (لا تُلغي الحسابات PENDING)
+        for (User u : userRepository.findAll()) {
+            if (u.getApprovalStatus() == null) {
+                u.setApprovalStatus(AccountApprovalStatus.APPROVED);
+                userRepository.save(u);
+            }
+        }
+
+        // إن وُجدت بيانات بدون مستخدم admin (مثلاً count>0 ولم يُشغّل الـ block الكامل) نُنشئ admin الافتراضي
+        if (!userRepository.existsByUsername("admin")) {
+            User admin = new User();
+            admin.setUsername("admin");
+            admin.setEmail("admin@hospital.com");
+            admin.setPassword(passwordEncoder.encode("admin123"));
+            admin.setFullName("Admin User");
+            admin.setPhone("+1234567890");
+            admin.setRole(Role.ADMIN);
+            admin.setAddress("123 Hospital Street");
+            admin.setActive(true);
+            admin.setApprovalStatus(AccountApprovalStatus.APPROVED);
+            userRepository.save(admin);
+            System.out.println("Created missing default admin: username=admin, password=admin123");
+        }
+
+        if (resetAdminCredentials) {
+            userRepository.findByUsernameIgnoreCase("admin").ifPresent(u -> {
+                u.setPassword(passwordEncoder.encode("admin123"));
+                u.setApprovalStatus(AccountApprovalStatus.APPROVED);
+                u.setActive(true);
+                userRepository.save(u);
+                System.out.println("hospital.dev.reset-admin-credentials: refreshed admin password hash and approval");
+            });
         }
     }
 }

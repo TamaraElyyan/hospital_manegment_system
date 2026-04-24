@@ -19,8 +19,11 @@ build/
 .vite/
 *.local
 
-# *.db
-# data/     
+# Local databases (dev — do not commit)
+data/
+*.mv.db
+*.trace.db
+*.sqlite3
 uploads/
 
 .DS_Store

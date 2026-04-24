@@ -1,22 +1,29 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import axios from "../api/axios";
+import { useIsAdmin } from "../hooks/useRoleAccess";
+import { AddListButton } from "../components/AddListButton";
+import { IconApprove, IconDelete, IconEdit, IconUserToggle } from "../components/TableActionIcons";
 import "./List.css";
 
+const emptyAdd = {
+  username: "",
+  email: "",
+  password: "",
+  fullName: "",
+  phone: "",
+  role: "PATIENT",
+  address: "",
+};
+
 const Users = () => {
+  const { t, i18n } = useTranslation();
+  const isAdmin = useIsAdmin();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showModal, setShowModal] = useState(false);
-  const [formData, setFormData] = useState({
-    username: "",
-    email: "",
-    password: "",
-    fullName: "",
-    phone: "",
-    role: "PATIENT",
-    address: "",
-  });
-  const navigate = useNavigate();
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [formData, setFormData] = useState(emptyAdd);
+  const [edit, setEdit] = useState(null);
 
   useEffect(() => {
     loadUsers();
@@ -28,87 +35,108 @@ const Users = () => {
       setUsers(response.data);
     } catch (error) {
       console.error("Error loading users:", error);
-      alert("Failed to load users");
+      alert(t("users.loadError"));
     } finally {
       setLoading(false);
     }
   };
 
-  // const handleSubmit = async (e) => {
-  //   e.preventDefault();
-  //   try {
-  //     await axios.post('/auth/register', formData);
-  //     alert('User added successfully');
-  //     setShowModal(false);
-  //     setFormData({
-  //       username: '',
-  //       email: '',
-  //       password: '',
-  //       fullName: '',
-  //       phone: '',
-  //       role: 'PATIENT',
-  //       address: ''
-  //     });
-  //     loadUsers();
-  //   } catch (error) {
-  //     console.error('Error creating user:', error);
-  //     alert(error.response?.data || 'Failed to add user');
-  //   }
-  // };
-  const handleSubmit = async (e) => {
+  const handleAddSubmit = async (e) => {
     e.preventDefault();
     try {
-      const token = localStorage.getItem("token");
-      const response = await axios.post("/auth/register", formData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      alert("User added successfully");
-      setShowModal(false);
-      setFormData({
-        username: "",
-        email: "",
-        password: "",
-        fullName: "",
-        phone: "",
-        role: "PATIENT",
-        address: "",
-      });
+      await axios.post("/users", formData);
+      alert(t("users.addSuccess"));
+      setShowAddModal(false);
+      setFormData(emptyAdd);
       loadUsers();
     } catch (error) {
       console.error("Error creating user:", error);
-      alert(error.response?.data || "Failed to add user");
+      alert(error.response?.data || t("users.addError"));
+    }
+  };
+
+  const openEdit = (u) => {
+    setEdit({
+      id: u.id,
+      username: u.username,
+      email: u.email,
+      fullName: u.fullName,
+      phone: u.phone || "",
+      address: u.address || "",
+      role: u.role,
+      active: u.active,
+      newPassword: "",
+    });
+  };
+
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+    if (!edit) return;
+    try {
+      const body = {
+        email: edit.email,
+        fullName: edit.fullName,
+        phone: edit.phone,
+        address: edit.address,
+        role: edit.role,
+        active: edit.active,
+      };
+      if (edit.newPassword && edit.newPassword.trim()) {
+        body.newPassword = edit.newPassword;
+      }
+      await axios.put(`/users/${edit.id}`, body);
+      alert(t("forms.changesSaved"));
+      setEdit(null);
+      loadUsers();
+    } catch (error) {
+      console.error("Error updating user:", error);
+      alert(error.response?.data || t("forms.saveError"));
     }
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm("Are you sure you want to delete this user?")) {
+    if (window.confirm(t("users.deleteConfirm"))) {
       try {
         await axios.delete(`/users/${id}`);
-        alert("User deleted successfully");
+        alert(t("users.deleteSuccess"));
         loadUsers();
       } catch (error) {
         console.error("Error deleting user:", error);
-        alert("Failed to delete user");
+        alert(t("users.deleteError"));
       }
     }
   };
 
-  const handleToggleActive = async (id, currentStatus) => {
+  const handleToggleActive = async (id) => {
     try {
       await axios.patch(`/users/${id}/toggle-active`);
-      alert("User status updated");
+      alert(t("users.toggleSuccess"));
       loadUsers();
     } catch (error) {
       console.error("Error updating user status:", error);
-      alert("Failed to update user status");
+      alert(t("users.toggleError"));
+    }
+  };
+
+  const handleApprove = async (id) => {
+    try {
+      await axios.post(`/users/${id}/approve`);
+      alert(t("users.approveSuccess"));
+      loadUsers();
+    } catch (error) {
+      console.error("Error approving user:", error);
+      alert(
+        error.response?.data
+          ? String(error.response.data)
+          : t("users.approveError")
+      );
     }
   };
 
   const formatDate = (dateString) => {
-    if (!dateString) return "N/A";
-    return new Date(dateString).toLocaleString("en-US", {
+    if (!dateString) return t("list.notAvailable");
+    const locale = i18n.language?.startsWith("ar") ? "ar-SA" : "en-US";
+    return new Date(dateString).toLocaleString(locale, {
       year: "numeric",
       month: "short",
       day: "numeric",
@@ -117,84 +145,112 @@ const Users = () => {
     });
   };
 
+  /** شارة الحالة: موافقة + نشاط */
+  const userStatus = (u) => {
+    if (u.approvalStatus === "PENDING") {
+      return { className: "status pending-approval", text: t("users.statusPendingApproval") };
+    }
+    if (!u.active) {
+      return { className: "status inactive", text: t("users.inactive") };
+    }
+    return { className: "status active", text: t("users.active") };
+  };
+
   return (
-    <div className="list-container">
-      <div className="list-header">
-        <h2>User Management</h2>
-        <div>
-          <button onClick={() => setShowModal(true)} className="add-btn">
-            Add New User
-          </button>
-          <button onClick={() => navigate("/dashboard")} className="back-btn">
-            Back to Dashboard
-          </button>
+    <div className="list-container list-container--users">
+      <div className="list-header list-header--actions">
+        <h1 className="list-page-title">{t("users.title")}</h1>
+        <div className="list-header-actions">
+          {isAdmin && (
+            <AddListButton
+              onClick={() => {
+                setFormData(emptyAdd);
+                setShowAddModal(true);
+              }}
+            >
+              {t("users.addUser")}
+            </AddListButton>
+          )}
         </div>
       </div>
 
       {loading ? (
-        <div>Loading...</div>
+        <div>{t("users.loading")}</div>
       ) : (
-        <div className="table-container">
+        <div className="table-container table-container--users">
           <table>
             <thead>
               <tr>
-                <th>Username</th>
-                <th>Full Name</th>
-                <th>Email</th>
-                <th>Phone</th>
-                <th>Role</th>
-                <th>Status</th>
-                <th>Created Date</th>
-                <th>Last Updated</th>
-                <th>Actions</th>
+                <th>{t("users.thUsername")}</th>
+                <th>{t("users.thFullName")}</th>
+                <th>{t("users.thEmail")}</th>
+                <th>{t("users.thPhone")}</th>
+                <th>{t("users.thRole")}</th>
+                <th>{t("users.thStatus")}</th>
+                <th>{t("users.thCreated")}</th>
+                <th>{t("users.thUpdated")}</th>
+                <th>{t("users.thActions")}</th>
               </tr>
             </thead>
             <tbody>
-              {users.map((user) => (
+              {users.map((user) => {
+                const st = userStatus(user);
+                return (
                 <tr key={user.id}>
                   <td>{user.username}</td>
                   <td>{user.fullName}</td>
-                  <td>{user.email}</td>
-                  <td>{user.phone || "Not specified"}</td>
+                  <td className="td-wrap">{user.email}</td>
+                  <td>{user.phone || t("users.notSpecified")}</td>
                   <td>{user.role}</td>
-                  <td>
-                    <span
-                      className={`status ${user.active ? "active" : "inactive"}`}
-                    >
-                      {user.active ? "Active" : "Inactive"}
+                  <td className="td-status">
+                    <span className={st.className} title={st.text}>
+                      {st.text}
                     </span>
                   </td>
                   <td>{formatDate(user.createdAt)}</td>
                   <td>{formatDate(user.updatedAt)}</td>
-                  <td>
-                    <button
-                      onClick={() => handleToggleActive(user.id, user.active)}
-                      className="toggle-btn"
-                    >
-                      {user.active ? "Deactivate" : "Activate"}
-                    </button>
-                    <button
-                      onClick={() => handleDelete(user.id)}
-                      className="delete-btn"
-                    >
-                      Delete
-                    </button>
+                  <td className="table-actions">
+                    <div className="action-icon-group">
+                      {isAdmin && (
+                        <IconEdit
+                          onClick={() => openEdit(user)}
+                          label={t("users.editUser")}
+                        />
+                      )}
+                      {isAdmin && user.approvalStatus === "PENDING" && (
+                        <IconApprove
+                          onClick={() => handleApprove(user.id)}
+                          label={t("users.approveUser")}
+                        />
+                      )}
+                      <IconUserToggle
+                        onClick={() => handleToggleActive(user.id)}
+                        isActive={user.active}
+                        activateLabel={t("users.activate")}
+                        deactivateLabel={t("users.deactivate")}
+                      />
+                      <IconDelete
+                        onClick={() => handleDelete(user.id)}
+                        label={t("users.delete")}
+                      />
+                    </div>
                   </td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         </div>
       )}
 
-      {showModal && (
+      {showAddModal && isAdmin && (
         <div className="modal-overlay">
           <div className="modal">
-            <h3>Add New User</h3>
-            <form onSubmit={handleSubmit}>
+            <h3>{t("users.addModalTitle")}</h3>
+            <form onSubmit={handleAddSubmit}>
               <input
                 type="text"
-                placeholder="Username"
+                placeholder={t("users.thUsername")}
                 value={formData.username}
                 onChange={(e) =>
                   setFormData({ ...formData, username: e.target.value })
@@ -203,7 +259,7 @@ const Users = () => {
               />
               <input
                 type="email"
-                placeholder="Email"
+                placeholder={t("auth.email")}
                 value={formData.email}
                 onChange={(e) =>
                   setFormData({ ...formData, email: e.target.value })
@@ -212,7 +268,7 @@ const Users = () => {
               />
               <input
                 type="password"
-                placeholder="Password"
+                placeholder={t("auth.password")}
                 value={formData.password}
                 onChange={(e) =>
                   setFormData({ ...formData, password: e.target.value })
@@ -221,7 +277,7 @@ const Users = () => {
               />
               <input
                 type="text"
-                placeholder="Full Name"
+                placeholder={t("users.thFullName")}
                 value={formData.fullName}
                 onChange={(e) =>
                   setFormData({ ...formData, fullName: e.target.value })
@@ -230,7 +286,7 @@ const Users = () => {
               />
               <input
                 type="tel"
-                placeholder="Phone Number"
+                placeholder={t("auth.phone")}
                 value={formData.phone}
                 onChange={(e) =>
                   setFormData({ ...formData, phone: e.target.value })
@@ -243,24 +299,126 @@ const Users = () => {
                 }
                 required
               >
-                <option value="PATIENT">Patient</option>
-                <option value="DOCTOR">Doctor</option>
-                <option value="NURSE">Nurse</option>
-                <option value="RECEPTIONIST">Receptionist</option>
-                <option value="ADMIN">Admin</option>
+                <option value="PATIENT">{t("roles.PATIENT")}</option>
+                <option value="DOCTOR">{t("roles.DOCTOR")}</option>
+                <option value="NURSE">{t("roles.NURSE")}</option>
+                <option value="RECEPTIONIST">{t("roles.RECEPTIONIST")}</option>
+                <option value="ADMIN">{t("roles.ADMIN")}</option>
               </select>
               <input
                 type="text"
-                placeholder="Address"
+                placeholder={t("auth.address")}
                 value={formData.address}
                 onChange={(e) =>
                   setFormData({ ...formData, address: e.target.value })
                 }
               />
               <div className="modal-buttons">
-                <button type="submit">Add</button>
-                <button type="button" onClick={() => setShowModal(false)}>
-                  Cancel
+                <button type="submit">{t("users.add")}</button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowAddModal(false);
+                    setFormData(emptyAdd);
+                  }}
+                >
+                  {t("users.cancel")}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {edit && isAdmin && (
+        <div className="modal-overlay">
+          <div className="modal modal--lg">
+            <h3>{t("users.editModalTitle")}</h3>
+            <p
+              style={{
+                margin: "0 0 0.75rem",
+                color: "#64748b",
+                fontSize: "0.9rem",
+              }}
+            >
+              {t("users.thUsername")}: {edit.username}
+            </p>
+            <form onSubmit={handleEditSubmit}>
+              <input
+                type="email"
+                placeholder={t("auth.email")}
+                value={edit.email}
+                onChange={(e) =>
+                  setEdit({ ...edit, email: e.target.value })
+                }
+                required
+              />
+              <input
+                type="text"
+                placeholder={t("users.thFullName")}
+                value={edit.fullName}
+                onChange={(e) =>
+                  setEdit({ ...edit, fullName: e.target.value })
+                }
+                required
+              />
+              <input
+                type="tel"
+                placeholder={t("auth.phone")}
+                value={edit.phone}
+                onChange={(e) => setEdit({ ...edit, phone: e.target.value })}
+              />
+              <input
+                type="text"
+                placeholder={t("auth.address")}
+                value={edit.address}
+                onChange={(e) =>
+                  setEdit({ ...edit, address: e.target.value })
+                }
+              />
+              <select
+                value={edit.role}
+                onChange={(e) =>
+                  setEdit({ ...edit, role: e.target.value })
+                }
+                required
+              >
+                <option value="PATIENT">{t("roles.PATIENT")}</option>
+                <option value="DOCTOR">{t("roles.DOCTOR")}</option>
+                <option value="NURSE">{t("roles.NURSE")}</option>
+                <option value="RECEPTIONIST">{t("roles.RECEPTIONIST")}</option>
+                <option value="ADMIN">{t("roles.ADMIN")}</option>
+              </select>
+              <label
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.5rem",
+                  marginBottom: "0.75rem",
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={Boolean(edit.active)}
+                  onChange={(e) =>
+                    setEdit({ ...edit, active: e.target.checked })
+                  }
+                />
+                {t("users.active")}
+              </label>
+              <input
+                type="password"
+                placeholder={t("forms.newPasswordOptional")}
+                value={edit.newPassword}
+                onChange={(e) =>
+                  setEdit({ ...edit, newPassword: e.target.value })
+                }
+                autoComplete="new-password"
+              />
+              <div className="modal-buttons">
+                <button type="submit">{t("forms.save")}</button>
+                <button type="button" onClick={() => setEdit(null)}>
+                  {t("users.cancel")}
                 </button>
               </div>
             </form>

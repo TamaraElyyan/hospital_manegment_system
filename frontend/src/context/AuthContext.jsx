@@ -38,13 +38,41 @@ export const AuthProvider = ({ children }) => {
 
       return response.data;
     } catch (error) {
-      console.error('Login error:', error);
+      // 401 = بيانات خاطئة عادة؛ لا نطبع كامل الـ stack كخطأ
+      if (error.response?.status !== 401) {
+        console.error("Login error:", error);
+      }
+      const data = error.response?.data;
+      const code = typeof data === 'object' && data != null ? data.code : null;
+      if (error.response?.status === 403 && code === 'ACCOUNT_PENDING') {
+        const e = new Error('ACCOUNT_PENDING');
+        e.code = 'ACCOUNT_PENDING';
+        throw e;
+      }
+      if (error.response?.status === 403 && code === 'ACCOUNT_DISABLED') {
+        const e = new Error('ACCOUNT_DISABLED');
+        e.code = 'ACCOUNT_DISABLED';
+        throw e;
+      }
       throw error;
     }
   };
 
   const register = async (data) => {
-    await axios.post('/auth/register', data);
+    const response = await axios.post('/auth/register', data);
+    const body = response.data;
+    if (body?.pendingApproval) {
+      return body;
+    }
+    const { token, ...userData } = body;
+    if (token) {
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(userData));
+      setToken(token);
+      setUser(userData);
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    }
+    return body;
   };
 
   const logout = () => {
@@ -62,6 +90,8 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
+// useAuth is co-located with AuthProvider (standard pattern for small apps).
+// eslint-disable-next-line react-refresh/only-export-components -- hook export
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {

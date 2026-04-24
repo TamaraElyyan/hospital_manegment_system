@@ -43,9 +43,22 @@ public class User {
 
     private Boolean active = true;
 
+    /** null treated as {@link AccountApprovalStatus#APPROVED} for legacy DB rows (SQLite add-column). */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "approval_status")
+    private AccountApprovalStatus approvalStatus;
+
     @CreationTimestamp
     private LocalDateTime createdAt;
 
     @UpdateTimestamp
     private LocalDateTime updatedAt;
+
+    @PrePersist
+    @PreUpdate
+    public void defaultApprovalIfNull() {
+        if (approvalStatus == null) {
+            approvalStatus = AccountApprovalStatus.APPROVED;
+        }
+    }
 }

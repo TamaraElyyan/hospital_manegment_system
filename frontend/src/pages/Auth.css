@@ -1,214 +1,486 @@
-/* General container */
-.auth-page-container {
-  display: flex;
-  min-height: 100vh;
-  background-color: #fafafa;
-  overflow: hidden;
+/* Login — reference split layout: white form ~40% | illustration ~60% */
+:root {
+  --login-teal: #109287;
+  --login-teal-dark: #0d7a70;
+  --login-teal-light: #18b5a3;
+  --login-navy: #1a2b56;
+  --login-orange: #f37021;
+  --login-bg-right: #f0f2f5;
+  --login-input-bg: #eef2f5;
+  --login-label: #5c6370;
 }
 
-/* Left side: form */
+/* داخل وثيقة RTL: إبقاء نفس تخطيط مرجع تسجيل الدخول (نموذج يسار | رسم) */
+.auth-page-container {
+  display: flex;
+  min-height: 100dvh;
+  min-height: 100vh;
+  width: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  align-items: stretch;
+  background: #fff;
+  direction: ltr;
+}
+
+/* Left: form panel */
 .auth-form-side {
-  flex: 1;
-  max-width: 450px;
-  padding: 2.5rem 2rem;
-  background-color: white;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+  flex: 0 1 42%;
+  min-width: min(100%, 22rem);
+  max-width: 32rem;
+  padding: clamp(1.25rem, 4vw, 3.5rem) clamp(1.5rem, 4vw, 2.75rem);
+  background: #fff;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  border-radius: 20px;
-  margin: 2rem;
+  box-shadow: none;
+  border: none;
+  margin: 0;
+  border-radius: 0;
 }
 
-/* Right side: illustration */
+/* تبع الـ UI للعربية: ليبلات وحقول من اليمين (الهيكل الـ split يبقى ltr فوق الـcontainer) */
+html[dir="rtl"] .auth-form-side {
+  direction: rtl;
+}
+
+/* Language switch: يرث اتجاه العمود (يمين/يسار) مع اختيار اللغة */
+.auth-form-sticky-top {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  align-self: stretch;
+  width: 100%;
+  margin: 0 0 0.5rem;
+  padding-bottom: 0.35rem;
+  background: #fff;
+}
+
+/* Right: illustration */
 .auth-illustration-side {
   flex: 1;
-  background-color: #f5f5f5;
+  min-width: 0;
+  background: var(--login-bg-right);
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: clamp(1rem, 3vw, 2rem);
 }
 
 .illustration-img {
-  max-width: 90%;
+  width: 100%;
+  max-width: min(520px, 95%);
   height: auto;
+  max-height: min(85vh, 640px);
+  object-fit: contain;
+  display: block;
 }
 
-/* Logo section */
+/* Logo — 3 rounded bars + wordmark (above sticky language row if boxes overlap) */
 .logo-section {
-  margin-bottom: 30px;
+  position: relative;
+  z-index: 1;
+  margin-bottom: 2rem;
   display: flex;
-  flex-direction: column; 
-  align-items: center; 
-  text-align: center; 
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
 }
 
 .network-logo {
   display: flex;
   align-items: center;
-  font-size: 28px;
-  font-weight: bold;
-  color: #333;
+  justify-content: center;
+  gap: 0.65rem;
 }
 
-.logo-lines {
-  color: #ff8c3a;
-  margin-right: 8px;
-  font-size: 32px;
+.logo-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 5px;
+  height: 2rem;
+}
+
+.logo-bar {
+  width: 7px;
+  border-radius: 4px;
+  background: var(--login-teal);
+}
+
+.logo-bar:nth-child(1) {
+  height: 70%;
+  background: var(--login-teal-dark);
+}
+
+.logo-bar:nth-child(2) {
+  height: 100%;
+  background: var(--login-teal);
+}
+
+.logo-bar:nth-child(3) {
+  height: 85%;
+  background: var(--login-teal-light);
+}
+
+.logo-text {
+  font-size: clamp(1.35rem, 3.2vw, 1.65rem);
+  font-weight: 800;
+  color: var(--login-navy);
+  letter-spacing: -0.03em;
 }
 
 .login-intro {
-  font-size: 16px;
-  color: #666;
-  margin-top: 10px;
+  font-size: 0.95rem;
+  color: var(--login-label);
+  margin: 0.85rem 0 0;
+  font-weight: 500;
+  text-align: center;
 }
 
-/* Form fields */
+/* يظهر فقط في Vite dev — تلميح بيانات التجربة (لا يُبنى للإنتاج) */
+.auth-dev-hint {
+  font-size: 0.8rem;
+  color: var(--login-label);
+  text-align: center;
+  margin: 0.4rem 0 0.75rem;
+  line-height: 1.45;
+  max-width: 22rem;
+  align-self: center;
+  opacity: 0.95;
+}
+
+/* Form */
 .login-form .form-group {
-  margin-bottom: 20px;
+  margin-bottom: 1.15rem;
 }
 
 .login-form label {
   display: block;
-  margin-bottom: 5px;
-  font-size: 14px;
+  margin-bottom: 0.4rem;
+  font-size: 0.875rem;
   font-weight: 500;
+  color: var(--login-label);
+  text-align: start;
 }
 
+/* Input + icon at inline-end (LTR: يمين، RTL: يسار) */
 .input-with-icon {
   position: relative;
+  display: block;
 }
 
 .input-with-icon input {
-  width: 85%;
-  padding: 12px 15px 12px 40px;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  font-size: 16px;
-  background-color: #f9f9f9;
+  width: 100%;
+  min-height: 50px;
+  padding-block: 0.65rem;
+  padding-inline: 1rem 3.35rem; /* text عند الـ start، فراغ عند الـ end للأيقونة */
+  border: 1px solid transparent;
+  border-radius: 10px;
+  font-size: 1rem;
+  background: var(--login-input-bg);
+  box-sizing: border-box;
+  color: #1a1d24;
+  text-align: start;
+}
+
+.input-with-icon input::placeholder {
+  color: #9ca3af;
 }
 
 .input-with-icon input:focus {
-  border-color: #ff8c3a;
   outline: none;
+  border-color: rgba(16, 146, 135, 0.45);
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(16, 146, 135, 0.12);
 }
 
-.input-icon {
+.input-icon-box {
   position: absolute;
   top: 50%;
-  left: 12px;
   transform: translateY(-50%);
-  color: #ff8c3a;
+  inset-inline-end: 6px;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background: var(--login-teal);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
   pointer-events: none;
+  flex-shrink: 0;
 }
 
-/* Buttons */
-.login-button, .signup-button {
-  width: 100%;
-  padding: 14px;
-  border-radius: 8px;
-  font-size: 16px;
-  font-weight: bold;
+.input-icon-box svg {
+  display: block;
+}
+
+.forgot-password {
+  display: block;
+  width: fit-content;
+  margin-top: 0.5rem;
+  margin-inline-start: auto;
+  background: none;
+  border: none;
+  color: var(--login-teal);
+  font-size: 0.8125rem;
   cursor: pointer;
-  transition: all 0.3s ease;
+  font-weight: 500;
+}
+
+.forgot-password:hover {
+  text-decoration: underline;
+}
+
+.login-button,
+.register-button {
+  width: 100%;
+  padding: 0.9rem 1rem;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
 }
 
 .login-button {
-  background-color: #ff8c3a;
-  color: white;
+  background: var(--login-teal);
+  color: #fff;
   border: none;
-  margin-top: 10px;
+  margin-top: 0.75rem;
+  box-shadow: 0 10px 28px rgba(243, 112, 33, 0.22);
 }
 
 .login-button:hover:not(:disabled) {
-  background-color: #ff771a;
+  background: var(--login-teal-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 12px 32px rgba(243, 112, 33, 0.28);
 }
 
-.signup-button {
-  background-color: white;
-  color: #ff8c3a;
-  border: 1px solid #ff8c3a;
-  margin-top: 15px;
+.login-button:disabled {
+  opacity: 0.75;
+  cursor: not-allowed;
 }
 
-.signup-button:hover:not(:disabled) {
-  background-color: #fff4e9;
+.register-button {
+  background: #fff;
+  color: var(--login-teal);
+  border: 1px solid rgba(16, 146, 135, 0.35);
+  margin-top: 0.85rem;
 }
 
-/* Forgot password link */
-.forgot-password {
-  background: none;
-  border: none;
-  color: #ff8c3a;
-  font-size: 14px;
-  cursor: pointer;
-  float: right;
-  margin-top: 5px;
+.register-button:hover:not(:disabled) {
+  background: #f7fffe;
 }
 
-/* Error message */
 .error-message {
-  background-color: #ffe0e0;
-  color: #d90000;
-  padding: 10px;
-  border-radius: 5px;
-  margin-bottom: 20px;
-  text-align: center;
-  font-size: 14px;
+  background: #fef2f2;
+  color: #b91c1c;
+  padding: 0.65rem 0.85rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  text-align: start;
+  font-size: 0.875rem;
+  border: 1px solid #fecaca;
 }
 
-/* OR separator */
+.auth-info-success {
+  background: #ecfdf5;
+  color: #0f172a;
+  padding: 1rem 1.1rem;
+  border-radius: 12px;
+  margin-bottom: 1.25rem;
+  border: 1px solid #6ee7b7;
+  text-align: start;
+  max-width: 100%;
+}
+
+.auth-info-success__title {
+  margin: 0 0 0.4rem;
+  font-weight: 800;
+  font-size: 1.05rem;
+  color: #047857;
+}
+
+.auth-info-success__text {
+  margin: 0 0 0.75rem;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: #334155;
+}
+
+.auth-info-success__link {
+  display: inline-block;
+  font-weight: 700;
+  color: #0d9488;
+  text-decoration: none;
+}
+
+.auth-info-success__link:hover {
+  text-decoration: underline;
+}
+
 .or-separator {
   display: flex;
   align-items: center;
-  margin: 25px 0;
+  margin: 1.35rem 0;
 }
 
 .or-separator hr {
-  flex-grow: 1;
+  flex: 1;
   border: none;
-  border-top: 1px solid #ddd;
+  border-top: 1px solid #e5e7eb;
 }
 
 .or-separator span {
-  padding: 0 10px;
-  color: #aaa;
-  font-size: 14px;
+  padding-inline: 0.75rem;
+  color: #9ca3af;
+  font-size: 0.8125rem;
 }
 
-/* Responsive */
-@media (max-width: 900px) {
-  .auth-page-container {
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
+/* تمرير عمودي. لا تستخدم direction:rtl هنا — كان يضع شريط التمرير يساراً بشكل يغطي النموذج/اللغة */
+.auth-form-side--scroll {
+  max-height: 100dvh;
+  max-height: 100svh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  direction: ltr;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+}
+
+.auth-form-side--scroll::-webkit-scrollbar {
+  width: 8px;
+}
+
+.auth-form-side--scroll::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+
+.auth-form-side--scroll::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+.auth-form-side--scroll::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+.register-select {
+  width: 100%;
+  min-height: 50px;
+  padding: 0.65rem 1rem;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  font-size: 1rem;
+  background: var(--login-input-bg);
+  color: #1a1d24;
+  box-sizing: border-box;
+  cursor: pointer;
+  text-align: start;
+}
+
+.register-select:focus {
+  outline: none;
+  border-color: rgba(16, 146, 135, 0.45);
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(16, 146, 135, 0.12);
+}
+
+.auth-footer-link {
+  margin: 1.25rem 0 0;
+  text-align: center;
+  font-size: 0.9rem;
+  color: var(--login-label);
+}
+
+.auth-footer-link a {
+  color: var(--login-teal);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.auth-footer-link a:hover {
+  text-decoration: underline;
+}
+
+/* Register: حقل بجانب حقل */
+.register-form .register-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 0.75rem;
+  margin-bottom: 1.15rem;
+  align-items: start;
+}
+
+.register-form .register-form-row--full {
+  grid-template-columns: 1fr;
+}
+
+.register-form .register-form-row .form-group {
+  margin-bottom: 0;
+}
+
+@media (max-width: 600px) {
+  .register-form .register-form-row:not(.register-form-row--full) {
+    grid-template-columns: 1fr;
   }
 
+  .register-form .register-form-row:not(.register-form-row--full) .form-group:not(:last-child) {
+    margin-bottom: 1.15rem;
+  }
+
+  .register-form .register-form-row:not(.register-form-row--full) .form-group:last-child {
+    margin-bottom: 0;
+  }
+}
+
+/* Tablet: slightly narrower form */
+@media (max-width: 1024px) {
+  .auth-form-side {
+    flex: 0 1 46%;
+  }
+}
+
+/* Mobile: form full width, illustration below */
+@media (max-width: 768px) {
+  .auth-page-container {
+    flex-direction: column;
+    min-height: 100dvh;
+  }
+
+  .auth-form-side {
+    flex: 1;
+    max-width: 100%;
+    min-width: 0;
+    padding: 1.75rem 1.25rem 1.5rem;
+    justify-content: flex-start;
+    padding-top: clamp(2rem, 8vh, 3rem);
+  }
+
+  .auth-illustration-side {
+    flex: 0 0 auto;
+    min-height: 220px;
+    padding: 1rem 1.25rem 1.75rem;
+  }
+
+  .illustration-img {
+    max-height: 220px;
+  }
+}
+
+/* Very small — hide art to focus form */
+@media (max-width: 480px) {
   .auth-illustration-side {
     display: none;
   }
 
   .auth-form-side {
-    max-width: 90%;
-    margin: 1rem;
-    padding: 2rem 1.5rem;
-  }
-}
-
-@media (max-width: 500px) {
-  .auth-form-side {
-    padding: 1.5rem 1rem;
-    margin: 0;
-    border-radius: 0;
-    box-shadow: none;
-  }
-
-  .network-logo {
-    font-size: 22px;
-  }
-
-  .login-button, .signup-button {
-    font-size: 14px;
-    padding: 12px;
+    min-height: 100dvh;
+    justify-content: center;
   }
 }

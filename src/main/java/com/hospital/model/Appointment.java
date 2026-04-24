@@ -4,10 +4,13 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "appointments")
@@ -44,6 +47,10 @@ public class Appointment {
 
     @Column(length = 2000)
     private String prescription;
+
+    @OneToMany(mappedBy = "appointment", fetch = FetchType.LAZY, cascade = {})
+    @JsonIgnore
+    private List<Invoice> invoices = new ArrayList<>();
 
     @CreationTimestamp
     private LocalDateTime createdAt;

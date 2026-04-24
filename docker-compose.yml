@@ -1,0 +1,42 @@
+# Usage:
+#   docker compose up -d --build
+#   API: http://localhost:8080
+#   DB:  localhost:5432 (hospital / hospital)
+#
+# Local run without Docker DB:  mvn spring-boot:run   (default sqlite profile)
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: hospital-postgres
+    environment:
+      POSTGRES_DB: hospitaldb
+      POSTGRES_USER: hospital
+      POSTGRES_PASSWORD: hospital
+    ports:
+      - "5432:5432"
+    volumes:
+      - hospital_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hospital -d hospitaldb"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: .
+    container_name: hospital-backend
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: postgres
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/hospitaldb
+      SPRING_DATASOURCE_USERNAME: hospital
+      SPRING_DATASOURCE_PASSWORD: hospital
+      CORS_ALLOWED_ORIGINS: http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000,http://localhost:4173
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  hospital_pg_data:

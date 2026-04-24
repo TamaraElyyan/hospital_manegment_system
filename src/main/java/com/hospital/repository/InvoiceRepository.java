@@ -12,4 +12,10 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long> {
     Optional<Invoice> findByInvoiceNumber(String invoiceNumber);
     List<Invoice> findByPatientId(Long patientId);
     List<Invoice> findByPaymentStatus(String paymentStatus);
+    List<Invoice> findByPatientIdIn(List<Long> patientIds);
+    long countByPatientIdIn(List<Long> patientIds);
+
+    long countByPatient_Id(Long patientId);
+
+    Optional<Invoice> findByAppointment_Id(Long appointmentId);
 }

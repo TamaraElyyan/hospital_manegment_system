@@ -1,3 +1,62 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+  --app-bg: #f0f4f8;
+  --app-teal: #0d9488;
+  --app-teal-dark: #0f766e;
+  --app-text: #0f172a;
+  --app-muted: #64748b;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  /* direction/lang يُعيّنان من i18n (ar → rtl، en → ltr) */
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  min-height: 100svh;
+  background: var(--app-bg);
+  color: var(--app-text);
+  font-family: system-ui, "Segoe UI", Roboto, "Noto Kufi Arabic", "Noto Naskh Arabic", sans-serif;
+  line-height: 1.5;
+  /* Prevent horizontal page shift from wide tables / charts */
+  overflow-x: clip;
+}
+
+#root {
+  min-height: 100dvh;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  text-align: start;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+a {
+  color: var(--app-teal-dark);
+}
+
+::selection {
+  background: rgba(13, 148, 136, 0.25);
+}

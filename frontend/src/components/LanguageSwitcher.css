@@ -1,0 +1,189 @@
+/* Globe + horizontal segment (not a vertical dropdown) */
+.lang-globe {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  z-index: 50;
+  gap: 0.5rem;
+}
+
+.lang-globe__trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid #e2e8f0;
+  border-radius: 50%;
+  background: #fff;
+  color: #109287;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.15s;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+}
+
+.lang-globe__trigger:hover {
+  background: #f0fdfa;
+  border-color: rgba(16, 146, 135, 0.45);
+  box-shadow: 0 2px 8px rgba(16, 146, 135, 0.15);
+}
+
+.lang-globe--open .lang-globe__trigger {
+  background: #e6fffa;
+  border-color: #109287;
+  color: #0d7a70;
+}
+
+.lang-globe__icon {
+  display: flex;
+  line-height: 0;
+}
+
+.lang-globe--auth .lang-globe__trigger {
+  width: auto;
+  min-width: 48px;
+  height: 44px;
+  padding-inline: 0.5rem 0.65rem;
+  border-radius: 999px;
+  gap: 0.35rem;
+}
+
+.lang-globe__code {
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: #1a2b56;
+  letter-spacing: 0.02em;
+  line-height: 1;
+}
+
+/* شريحتان أفقيتان — ليس قائمة منسدلة */
+.lang-globe__segment {
+  position: absolute;
+  top: 50%;
+  right: calc(100% + 0.5rem);
+  left: auto;
+  transform: translateY(-50%);
+  display: inline-flex;
+  flex-direction: row;
+  margin: 0;
+  padding: 3px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.1);
+  animation: langSegInDesktop 0.2s ease;
+  white-space: nowrap;
+  z-index: 60;
+}
+
+[dir="rtl"] .lang-globe:not(.lang-globe--auth) .lang-globe__segment {
+  right: auto;
+  left: calc(100% + 0.5rem);
+}
+
+/* موبايل شريط علوي: شريط بسيط بوسط الشاشة */
+@media (max-width: 480px) {
+  .lang-globe--toolbar .lang-globe__segment {
+    position: fixed;
+    top: 3.65rem;
+    right: auto;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 100;
+    animation: langSegInMobile 0.2s ease;
+  }
+}
+
+.lang-globe__seg {
+  position: relative;
+  border: none;
+  background: transparent;
+  color: #64748b;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0.45rem 0.9rem;
+  border-radius: 9px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.lang-globe__seg + .lang-globe__seg {
+  margin-inline-start: 2px;
+}
+
+.lang-globe__seg:hover {
+  color: #0d7a70;
+  background: #f0fdfa;
+}
+
+.lang-globe__seg--active {
+  background: linear-gradient(145deg, #e6fffa, #ccfbf1);
+  color: #0d7a70;
+  box-shadow: 0 1px 0 rgba(16, 146, 135, 0.2);
+}
+
+/* Auth pages: do not span full row or high z-index — avoids covering the logo/heading */
+.lang-globe--auth {
+  position: relative;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.5rem;
+  width: auto;
+  max-width: 100%;
+  flex: 0 0 auto;
+  align-self: flex-start;
+  z-index: 0;
+}
+
+.lang-globe--auth .lang-globe__segment {
+  position: static;
+  transform: none;
+  margin: 0;
+  animation: langSegInAuth 0.2s ease;
+}
+
+/* صف تسجيل: الشريحتان بجانب الكرة */
+@media (max-width: 400px) {
+  .lang-globe--auth .lang-globe__segment {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@keyframes langSegInDesktop {
+  from {
+    opacity: 0;
+    transform: translateY(-50%) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(-50%) scale(1);
+  }
+}
+
+@keyframes langSegInMobile {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0) scale(1);
+  }
+}
+
+@keyframes langSegInAuth {
+  from {
+    opacity: 0.85;
+  }
+  to {
+    opacity: 1;
+  }
+}

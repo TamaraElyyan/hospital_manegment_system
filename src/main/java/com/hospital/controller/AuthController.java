@@ -3,27 +3,30 @@ package com.hospital.controller;
 import com.hospital.dto.LoginRequest;
 import com.hospital.dto.LoginResponse;
 import com.hospital.dto.RegisterRequest;
-import com.hospital.model.*;
-import com.hospital.repository.*;
+import com.hospital.dto.RegisterResponse;
+import com.hospital.model.AccountApprovalStatus;
+import com.hospital.model.User;
+import com.hospital.repository.UserRepository;
 import com.hospital.security.JwtUtil;
+import com.hospital.service.UserRegistrationService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.time.LocalDate;
-import java.util.UUID;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
 @CrossOrigin(origins = "*")
 public class AuthController {
 
-    @Autowired
-    private AuthenticationManager authenticationManager;
+    private static final Logger log = LoggerFactory.getLogger(AuthController.class);
 
     @Autowired
     private UserDetailsService userDetailsService;
@@ -38,102 +41,103 @@ public class AuthController {
     private PasswordEncoder passwordEncoder;
 
     @Autowired
-    private DoctorRepository doctorRepository;
-
-    @Autowired
-    private PatientRepository patientRepository;
-
-    @Autowired
-    private StaffRepository staffRepository;
+    private UserRegistrationService userRegistrationService;
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest) {
-        System.out.println("Login attempt: " + loginRequest.getUsername());
-        var userOpt = userRepository.findByUsername(loginRequest.getUsername());
-        if (userOpt.isPresent() && passwordEncoder.matches(loginRequest.getPassword(), userOpt.get().getPassword())) {
-            User user = userOpt.get();
-            final UserDetails userDetails = userDetailsService.loadUserByUsername(user.getUsername());
-            String jwt;
-            try {
-                jwt = jwtUtil.generateToken(userDetails);
-            } catch (Exception e) {
-                e.printStackTrace();
-                return ResponseEntity.status(500).body("JWT generation failed");
-            }
-            return ResponseEntity.ok(new LoginResponse(jwt, user.getUsername(), user.getEmail(),
-                    user.getFullName(), user.getRole()));
-        } else {
-            System.out.println("Invalid username or password");
-            return ResponseEntity.status(401).body("Invalid username or password");
+        if (loginRequest == null || loginRequest.getUsername() == null || loginRequest.getUsername().isBlank()
+                || loginRequest.getPassword() == null) {
+            return ResponseEntity.badRequest().body("Username and password are required");
         }
+        String username = loginRequest.getUsername().trim();
+        String passwordPlain = loginRequest.getPassword().trim();
+        if (passwordPlain.isEmpty()) {
+            return ResponseEntity.badRequest().body("Password is required");
+        }
+        System.out.println("Login attempt: " + username);
+        var userOpt = userRepository.findByUsernameIgnoreCase(username);
+        if (userOpt.isEmpty() && username.contains("@")) {
+            userOpt = userRepository.findByEmail(username);
+        }
+        boolean passwordOk = false;
+        if (userOpt.isPresent()) {
+            String hash = userOpt.get().getPassword();
+            try {
+                passwordOk = hash != null && passwordEncoder.matches(passwordPlain, hash);
+            } catch (Exception e) {
+                System.err.println("Password check failed for user " + username + ": " + e.getMessage());
+                passwordOk = false;
+            }
+        }
+        if (userOpt.isEmpty() || !passwordOk) {
+            System.out.println("Invalid username or password");
+            return ResponseEntity.status(401)
+                    .body(Map.of("code", "INVALID_CREDENTIALS", "message", "Invalid username or password"));
+        }
+
+        User user = userOpt.get();
+
+        if (user.getApprovalStatus() == AccountApprovalStatus.PENDING) {
+            return ResponseEntity.status(403)
+                    .body(Map.of("code", "ACCOUNT_PENDING", "message", "Account is pending admin approval"));
+        }
+        if (!Boolean.TRUE.equals(user.getActive())) {
+            return ResponseEntity.status(403)
+                    .body(Map.of("code", "ACCOUNT_DISABLED", "message", "Account is disabled"));
+        }
+
+        final UserDetails userDetails = userDetailsService.loadUserByUsername(user.getUsername());
+        String jwt;
+        try {
+            jwt = jwtUtil.generateToken(userDetails);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body("JWT generation failed: " + e.getMessage());
+        }
+        return ResponseEntity.ok(new LoginResponse(jwt, user.getUsername(), user.getEmail(),
+                user.getFullName(), user.getRole()));
     }
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody RegisterRequest request) {
-        if (userRepository.existsByUsername(request.getUsername())) {
-            return ResponseEntity.badRequest().body("Username already exists");
+        if (request == null) {
+            return ResponseEntity.badRequest().body("Request body is required");
         }
-        if (userRepository.existsByEmail(request.getEmail())) {
-            return ResponseEntity.badRequest().body("Email already exists");
+        try {
+            User saved = userRegistrationService.register(request, AccountApprovalStatus.PENDING);
+            return ResponseEntity.status(HttpStatus.CREATED).body(
+                    new RegisterResponse(true, null, saved.getUsername(), saved.getEmail(),
+                            saved.getFullName(), saved.getRole()));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body("Registration failed: " + e.getMessage());
         }
+    }
 
-        User user = new User();
-        user.setUsername(request.getUsername());
-        user.setEmail(request.getEmail());
-        user.setPassword(passwordEncoder.encode(request.getPassword()));
-        user.setFullName(request.getFullName());
-        user.setPhone(request.getPhone());
-        user.setRole(request.getRole());
-        user.setAddress(request.getAddress());
-        user.setActive(true);
-
-        User savedUser = userRepository.save(user);
-
-        switch (request.getRole()) {
-            case DOCTOR -> {
-                Doctor doctor = new Doctor();
-                doctor.setUser(savedUser);
-                doctor.setLicenseNumber("DOC-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
-                doctor.setSpecialization("General Practitioner");
-                doctor.setQualifications("MD");
-                doctor.setExperienceYears(0);
-                doctor.setConsultationFee("50.00");
-                doctor.setSchedule("Mon-Fri: 9 AM - 5 PM");
-                doctor.setAvailable(true);
-                doctorRepository.save(doctor);
-            }
-            case PATIENT -> {
-                Patient patient = new Patient();
-                patient.setPatientNumber("PAT-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
-                patient.setFullName(savedUser.getFullName());
-                patient.setDateOfBirth(LocalDate.now().minusYears(30));
-                patient.setAge(30);
-                patient.setGender("Not Specified");
-                patient.setPhone(savedUser.getPhone());
-                patient.setEmail(savedUser.getEmail());
-                patient.setAddress(savedUser.getAddress());
-                patient.setStatus("ACTIVE");
-                patientRepository.save(patient);
-            }
-            case NURSE, RECEPTIONIST -> {
-                Staff staff = new Staff();
-                staff.setUser(savedUser);
-                staff.setPosition(request.getRole().toString());
-                staff.setShift("Morning");
-                staff.setActive(true);
-                staffRepository.save(staff);
-            }
-            default -> {
-                // No additional entity to create
-            }
+    /**
+     * Placeholder: does not email until {@code spring.mail.*} and reset tokens are implemented.
+     * Response is generic to avoid disclosing which emails are registered.
+     */
+    @PostMapping("/forgot-password")
+    public ResponseEntity<?> forgotPassword(@RequestBody(required = false) Map<String, String> body) {
+        String email = body != null ? body.get("email") : null;
+        if (email == null || email.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Email is required"));
         }
-          // Generate JWT token for the newly registered user
+        String trimmed = email.trim();
+        userRepository.findByEmail(trimmed)
+                .ifPresent(u -> log.info("Password reset requested for user id {} (email configured: check MAIL_*)", u.getId()));
+        return ResponseEntity.ok(
+                Map.of("message", "If that email is registered, reset instructions will be sent when email is enabled on the server."));
+    }
 
-        final UserDetails userDetails = userDetailsService.loadUserByUsername(savedUser.getUsername());
-        String jwt = jwtUtil.generateToken(userDetails);
-
-        return ResponseEntity.ok(new LoginResponse(jwt, savedUser.getUsername(),
-                savedUser.getEmail(), savedUser.getFullName(), savedUser.getRole()));
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword() {
+        return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED)
+                .body(Map.of("code", "NOT_IMPLEMENTED",
+                        "message", "Token-based password reset is not enabled. Contact the administrator."));
     }
 
     // New endpoint to get current user info

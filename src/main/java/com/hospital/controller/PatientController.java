@@ -1,14 +1,21 @@
 package com.hospital.controller;
 
+import com.hospital.model.Doctor;
 import com.hospital.model.Patient;
+import com.hospital.model.Role;
 import com.hospital.repository.PatientRepository;
+import com.hospital.service.CurrentUserService;
+import com.hospital.service.DoctorDataScopeService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/patients")
@@ -18,24 +25,55 @@ public class PatientController {
     @Autowired
     private PatientRepository patientRepository;
 
+    @Autowired
+    private CurrentUserService currentUserService;
+
+    @Autowired
+    private DoctorDataScopeService doctorDataScopeService;
+
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR', 'NURSE', 'RECEPTIONIST')")
     public ResponseEntity<List<Patient>> getAllPatients() {
+        var docOpt = currentUserService.getCurrentDoctor();
+        if (docOpt.isPresent()) {
+            return ResponseEntity.ok(doctorDataScopeService.getAccessiblePatients(docOpt.get()));
+        }
         return ResponseEntity.ok(patientRepository.findAll());
     }
 
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR', 'NURSE', 'RECEPTIONIST', 'PATIENT')")
     public ResponseEntity<?> getPatientById(@PathVariable Long id) {
-        return patientRepository.findById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        Optional<Patient> opt = patientRepository.findById(id);
+        if (opt.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        var docOpt = currentUserService.getCurrentDoctor();
+        if (docOpt.isPresent() && !doctorDataScopeService.canDoctorAccessPatient(docOpt.get(), id)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Forbidden");
+        }
+        var userOpt = currentUserService.getCurrentUser();
+        if (userOpt.isPresent() && userOpt.get().getRole() == Role.PATIENT
+                && !currentUserService.isSelfPatientRecord(id)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Forbidden");
+        }
+        return ResponseEntity.ok(opt.get());
     }
 
     @GetMapping("/search")
     @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR', 'NURSE', 'RECEPTIONIST')")
     public ResponseEntity<List<Patient>> searchPatients(@RequestParam String name) {
-        return ResponseEntity.ok(patientRepository.findByFullNameContainingIgnoreCase(name));
+        List<Patient> list = patientRepository.findByFullNameContainingIgnoreCase(name);
+        var docOpt = currentUserService.getCurrentDoctor();
+        if (docOpt.isEmpty()) {
+            return ResponseEntity.ok(list);
+        }
+        Doctor d = docOpt.get();
+        var allowed = doctorDataScopeService.getAccessiblePatientIds(d);
+        list = list.stream()
+                .filter(p -> allowed.contains(p.getId()))
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(list);
     }
 
     @PostMapping
@@ -51,6 +89,10 @@ public class PatientController {
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR', 'NURSE', 'RECEPTIONIST')")
     public ResponseEntity<?> updatePatient(@PathVariable Long id, @RequestBody Patient patientDetails) {
+        var docOpt = currentUserService.getCurrentDoctor();
+        if (docOpt.isPresent() && !doctorDataScopeService.canDoctorAccessPatient(docOpt.get(), id)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Forbidden");
+        }
         return patientRepository.findById(id)
                 .map(patient -> {
                     patient.setFullName(patientDetails.getFullName());

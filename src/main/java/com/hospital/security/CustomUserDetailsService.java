@@ -1,5 +1,6 @@
 package com.hospital.security;
 
+import com.hospital.model.AccountApprovalStatus;
 import com.hospital.model.User;
 import com.hospital.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,9 +23,17 @@ public class CustomUserDetailsService implements UserDetailsService {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
 
+        AccountApprovalStatus ap = user.getApprovalStatus();
+        boolean accountApproved = ap == null || ap == AccountApprovalStatus.APPROVED;
+        boolean enabled = Boolean.TRUE.equals(user.getActive()) && accountApproved;
+
         return new org.springframework.security.core.userdetails.User(
                 user.getUsername(),
                 user.getPassword(),
+                enabled,
+                true,
+                true,
+                true,
                 Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()))
         );
     }

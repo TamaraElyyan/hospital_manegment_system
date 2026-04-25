@@ -1,59 +1,79 @@
 package com.hospital.config;
 
-import org.springframework.core.env.ConfigurableEnvironment;
-import org.springframework.core.env.MapPropertySource;
 import org.springframework.util.StringUtils;
 
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Optional;
 
 /**
- * Maps Render/Neon {@code DATABASE_URL=postgresql://...} to {@code spring.datasource.*}.
- * Called from {@link RenderDatabaseUrlEnvironmentListener} after the full environment is ready,
- * so it always overrides values from application-postgres (e.g. old localhost default).
+ * Maps Render's {@code DATABASE_URL=postgresql://...} into
+ * {@code spring.datasource.*} as JVM system properties before Spring Boot starts, so
+ * auto-configuration always sees a JDBC URL (avoids empty url when listeners do not run).
+ * <p>
+ * If {@code SPRING_DATASOURCE_URL} is set (e.g. docker-compose), that takes precedence and this is a
+ * no-op.
  */
 public final class RenderDatabaseUrlMapper {
+
+    private record DatasourceProps(String url, String username, String password) {
+    }
 
     private RenderDatabaseUrlMapper() {
     }
 
-    public static void applyTo(ConfigurableEnvironment environment) {
-        // docker-compose / local explicit JDBC (not Render's DATABASE_URL)
-        if (StringUtils.hasText(environment.getProperty("SPRING_DATASOURCE_URL"))) {
+    /**
+     * Call from {@code public static void main} before {@link org.springframework.boot.SpringApplication#run}.
+     */
+    public static void applyFromEnvToSystemProperties() {
+        if (StringUtils.hasText(safeEnv("SPRING_DATASOURCE_URL"))) {
             return;
         }
-        String rawDatabaseUrl = environment.getProperty("DATABASE_URL");
-        if (rawDatabaseUrl == null || !StringUtils.hasText(rawDatabaseUrl.trim())) {
+        String databaseUrl = safeEnv("DATABASE_URL");
+        if (!StringUtils.hasText(databaseUrl)) {
             return;
         }
-        String databaseUrl = rawDatabaseUrl.trim();
+        Optional<DatasourceProps> p = parsePostgresUrl(databaseUrl.trim());
+        if (p.isEmpty()) {
+            return;
+        }
+        DatasourceProps d = p.get();
+        System.setProperty("spring.datasource.url", d.url());
+        System.setProperty("spring.datasource.username", d.username());
+        System.setProperty("spring.datasource.password", d.password());
+    }
+
+    private static String safeEnv(String key) {
+        String v = System.getenv(key);
+        return v == null ? "" : v;
+    }
+
+    static Optional<DatasourceProps> parsePostgresUrl(String databaseUrl) {
         if (!databaseUrl.startsWith("postgresql://") && !databaseUrl.startsWith("postgres://")) {
-            return;
+            return Optional.empty();
         }
         int schemeLen = databaseUrl.startsWith("postgresql://") ? 15 : 11;
         String rest = databaseUrl.substring(schemeLen);
         int at = rest.indexOf('@');
         if (at < 0) {
-            return;
+            return Optional.empty();
         }
         String userInfo = rest.substring(0, at);
         String afterAt = rest.substring(at + 1);
         String[] up = userInfo.split(":", 2);
         if (up.length < 1 || !StringUtils.hasText(up[0])) {
-            return;
+            return Optional.empty();
         }
         String user = urlDecode(up[0]);
         String pass = up.length > 1 ? urlDecode(up[1]) : "";
         int slash = afterAt.indexOf('/');
         if (slash < 0) {
-            return;
+            return Optional.empty();
         }
         String hostPart = afterAt.substring(0, slash);
         String pathAndQuery = afterAt.substring(slash + 1);
         if (!StringUtils.hasText(pathAndQuery)) {
-            return;
+            return Optional.empty();
         }
         int hostColon = hostPart.lastIndexOf(':');
         String host;
@@ -63,14 +83,14 @@ public final class RenderDatabaseUrlMapper {
             try {
                 port = Integer.parseInt(hostPart.substring(hostColon + 1));
             } catch (NumberFormatException e) {
-                return;
+                return Optional.empty();
             }
         } else {
             host = hostPart;
             port = 5432;
         }
         if (!StringUtils.hasText(host)) {
-            return;
+            return Optional.empty();
         }
         int qm = pathAndQuery.indexOf('?');
         String dbName = (qm < 0 ? pathAndQuery : pathAndQuery.substring(0, qm));
@@ -78,7 +98,7 @@ public final class RenderDatabaseUrlMapper {
             dbName = dbName.substring(1);
         }
         if (!StringUtils.hasText(dbName)) {
-            return;
+            return Optional.empty();
         }
         String q = qm < 0 ? "" : pathAndQuery.substring(qm + 1);
         String jdbcUrl;
@@ -91,13 +111,7 @@ public final class RenderDatabaseUrlMapper {
                 jdbcUrl = "jdbc:postgresql://" + host + ":" + port + "/" + dbName + "?" + q + "&sslmode=require";
             }
         }
-        Map<String, Object> m = new HashMap<>();
-        m.put("spring.datasource.url", jdbcUrl);
-        m.put("spring.datasource.username", user);
-        m.put("spring.datasource.password", pass);
-        environment
-                .getPropertySources()
-                .addFirst(new MapPropertySource("renderOrNeonPostgresFromDatabaseUrl", m));
+        return Optional.of(new DatasourceProps(jdbcUrl, user, pass));
     }
 
     private static String urlDecode(String s) {

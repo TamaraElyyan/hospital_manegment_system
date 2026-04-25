@@ -11,4 +11,6 @@ WORKDIR /app
 COPY --from=build /app/target/hospital-management-1.0.0.jar /app/app.jar
 EXPOSE 8080
 ENV SPRING_PROFILES_ACTIVE=postgres
+# Render free tier ~512MB RAM: cap heap so the JVM is not OOM-killed before Tomcat binds PORT
+ENV JAVA_TOOL_OPTIONS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=65.0 -XX:InitialRAMPercentage=20.0"
 ENTRYPOINT ["java", "-jar", "/app/app.jar"]

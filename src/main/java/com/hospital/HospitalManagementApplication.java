@@ -16,8 +16,15 @@ public class HospitalManagementApplication {
         failIfPostgresProfileWithNoJdbcUrl();
         SpringApplication app = new SpringApplication(HospitalManagementApplication.class);
         app.addListeners((ApplicationListener<ApplicationFailedEvent>) e -> {
-            System.err.println("========== Application failed to start (root cause at bottom) ==========");
-            e.getException().printStackTrace(System.err);
+            Throwable t = e.getException();
+            System.err.println("========== Application failed to start ==========");
+            Throwable root = t;
+            while (root.getCause() != null && root.getCause() != root) {
+                root = root.getCause();
+            }
+            System.err.println(
+                    "Root cause: " + root.getClass().getName() + ": " + root.getMessage());
+            t.printStackTrace(System.err);
         });
         app.run(args);
     }

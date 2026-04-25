@@ -29,6 +29,18 @@ import java.util.stream.Collectors;
 @EnableMethodSecurity
 public class SecurityConfig {
 
+    /** With allowCredentials(true), avoid Allowed-Headers * (stricter validation in Spring Security 6 / Tomcat startup). */
+    private static final List<String> CORS_HEADERS_EXPLICIT = Arrays.asList(
+            "Authorization",
+            "Content-Type",
+            "Accept",
+            "Origin",
+            "X-Requested-With",
+            "Access-Control-Request-Method",
+            "Access-Control-Request-Headers",
+            "Cache-Control",
+            "Pragma");
+
     @Value("${app.cors.allowed-origins:http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000}")
     private String corsAllowedOrigins;
 
@@ -73,12 +85,13 @@ private JwtRequestFilter jwtRequestFilter;
         if (origins.isEmpty() || (origins.size() == 1 && "*".equals(origins.get(0)))) {
             configuration.setAllowedOriginPatterns(List.of("*"));
             configuration.setAllowCredentials(false);
+            configuration.setAllowedHeaders(List.of("*"));
         } else {
             configuration.setAllowedOrigins(new ArrayList<>(origins));
             configuration.setAllowCredentials(true);
+            configuration.setAllowedHeaders(CORS_HEADERS_EXPLICIT);
         }
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("*"));
         configuration.setExposedHeaders(List.of("Authorization"));
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);

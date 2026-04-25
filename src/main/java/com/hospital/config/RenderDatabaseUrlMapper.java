@@ -33,8 +33,15 @@ public final class RenderDatabaseUrlMapper {
         if (!StringUtils.hasText(databaseUrl)) {
             return;
         }
-        Optional<DatasourceProps> p = parsePostgresUrl(databaseUrl.trim());
+        String trimmed = databaseUrl.trim();
+        Optional<DatasourceProps> p = parsePostgresUrl(trimmed);
         if (p.isEmpty()) {
+            System.err.println(
+                    "RenderDatabaseUrlMapper: DATABASE_URL is set but is not a supported postgresql:// URL (len="
+                            + trimmed.length()
+                            + ", prefix="
+                            + (trimmed.length() > 20 ? trimmed.substring(0, 20) : trimmed)
+                            + "). Check Render database link and connectionString.");
             return;
         }
         DatasourceProps d = p.get();
@@ -118,6 +125,11 @@ public final class RenderDatabaseUrlMapper {
         if (s == null || s.isEmpty()) {
             return s;
         }
-        return URLDecoder.decode(s, StandardCharsets.UTF_8);
+        try {
+            return URLDecoder.decode(s, StandardCharsets.UTF_8);
+        } catch (IllegalArgumentException e) {
+            // Malformed % sequences in the URL — use raw fragment so JDBC can still work
+            return s;
+        }
     }
 }

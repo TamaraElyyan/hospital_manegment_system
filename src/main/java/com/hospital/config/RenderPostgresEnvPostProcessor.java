@@ -14,16 +14,16 @@ import java.util.Map;
 
 /**
  * Converts Render/Neon style {@code DATABASE_URL=postgresql://user:pass@host:port/db?sslmode=require}
- * into Spring's {@code spring.datasource.*} (JDBC) when the JDBC URL is not set explicitly.
+ * into {@code spring.datasource.*} (JDBC). When {@code DATABASE_URL} is set (e.g. on Render), it
+ * overrides defaults from {@code application-postgres.properties}.
  */
 @Order(Ordered.HIGHEST_PRECEDENCE)
 public class RenderPostgresEnvPostProcessor implements EnvironmentPostProcessor {
 
     @Override
     public void postProcessEnvironment(ConfigurableEnvironment environment, SpringApplication app) {
-        if (StringUtils.hasText(environment.getProperty("spring.datasource.url"))) {
-            return;
-        }
+        // Render/Neon set DATABASE_URL; must run even when application-postgres has a
+        // default spring.datasource.url (e.g. localhost) — that default would block us here.
         String databaseUrl = environment.getProperty("DATABASE_URL");
         if (!StringUtils.hasText(databaseUrl)) {
             return;

@@ -69,14 +69,16 @@ private JwtRequestFilter jwtRequestFilter;
                 .map(String::trim)
                 .filter(s -> !s.isEmpty())
                 .collect(Collectors.toList());
+        // CORS: allowCredentials(true) is incompatible with a wildcard origin (browser + Spring validation)
         if (origins.isEmpty() || (origins.size() == 1 && "*".equals(origins.get(0)))) {
             configuration.setAllowedOriginPatterns(List.of("*"));
+            configuration.setAllowCredentials(false);
         } else {
             configuration.setAllowedOrigins(new ArrayList<>(origins));
+            configuration.setAllowCredentials(true);
         }
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
-        configuration.setAllowedHeaders(Arrays.asList("*"));
-        configuration.setAllowCredentials(true);
+        configuration.setAllowedHeaders(List.of("*"));
         configuration.setExposedHeaders(List.of("Authorization"));
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);

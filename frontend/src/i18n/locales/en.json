@@ -71,7 +71,8 @@
     "DOCTOR": "Doctor",
     "NURSE": "Nurse",
     "RECEPTIONIST": "Receptionist",
-    "ADMIN": "Admin"
+    "ADMIN": "Admin",
+    "unknown": "—"
   },
   "loading": "Loading…",
   "loadingStats": "Loading statistics…",

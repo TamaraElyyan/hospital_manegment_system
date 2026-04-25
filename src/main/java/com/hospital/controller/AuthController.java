@@ -149,7 +149,7 @@ public class AuthController {
             }
             String jwt = token.substring(7);
             String username = jwtUtil.extractUsername(jwt);
-            User user = userRepository.findByUsername(username).orElseThrow();
+            User user = userRepository.findByUsernameIgnoreCase(username).orElseThrow();
             return ResponseEntity.ok(user);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("Invalid token");

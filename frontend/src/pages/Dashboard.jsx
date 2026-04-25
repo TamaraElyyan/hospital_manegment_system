@@ -52,7 +52,13 @@ const Dashboard = () => {
     }
   };
 
-  const role = user?.role;
+  const roleRaw = user?.role;
+  const role =
+    typeof roleRaw === "string"
+      ? roleRaw
+      : roleRaw && typeof roleRaw === "object"
+        ? roleRaw.name
+        : undefined;
   const isStaff = ["ADMIN", "NURSE", "RECEPTIONIST"].includes(role);
   const isDoctor = role === "DOCTOR";
   const isPatient = role === "PATIENT";
@@ -112,7 +118,7 @@ const Dashboard = () => {
         <p className="page-subtitle">
           {pageSubtitle}
           <span className="dashboard-role-pill" title={t("auth.role")}>
-            {t(`roles.${role}`, role)}
+            {role ? t(`roles.${role}`) : t("roles.unknown")}
           </span>
         </p>
       </div>

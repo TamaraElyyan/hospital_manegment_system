@@ -71,7 +71,8 @@
     "DOCTOR": "طبيب",
     "NURSE": "ممرض",
     "RECEPTIONIST": "استقبال",
-    "ADMIN": "مدير"
+    "ADMIN": "مدير",
+    "unknown": "—"
   },
   "loading": "جاري التحميل…",
   "loadingStats": "جاري تحميل الإحصائيات…",

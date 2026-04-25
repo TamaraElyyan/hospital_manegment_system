@@ -3,6 +3,14 @@ import axios from '../api/axios';
 
 const AuthContext = createContext(null);
 
+function normalizeRole(userLike) {
+  if (!userLike || typeof userLike !== 'object') return userLike;
+  const r = userLike.role;
+  const role =
+    typeof r === 'string' ? r : r && typeof r === 'object' && r.name != null ? String(r.name) : r;
+  return { ...userLike, role };
+}
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null); // State to hold the token
@@ -11,19 +19,40 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const savedUser = localStorage.getItem('user');
     const savedToken = localStorage.getItem('token');
-    if (savedUser && savedToken) {
-      setUser(JSON.parse(savedUser));
-      setToken(savedToken);
-      // Set default auth header for all future requests
-      axios.defaults.headers.common['Authorization'] = `Bearer ${savedToken}`;
+    if (!savedUser || !savedToken) {
+      setLoading(false);
+      return;
     }
-    setLoading(false);
+    axios.defaults.headers.common['Authorization'] = `Bearer ${savedToken}`;
+    setToken(savedToken);
+
+    const bootstrap = async () => {
+      try {
+        const { data } = await axios.get('/auth/me');
+        const merged = normalizeRole({
+          ...JSON.parse(savedUser),
+          id: data.id,
+          username: data.username,
+          email: data.email,
+          fullName: data.fullName,
+          role: data.role,
+        });
+        localStorage.setItem('user', JSON.stringify(merged));
+        setUser(merged);
+      } catch {
+        setUser(normalizeRole(JSON.parse(savedUser)));
+      } finally {
+        setLoading(false);
+      }
+    };
+    bootstrap();
   }, []);
 
   const login = async (username, password) => {
     try {
       const response = await axios.post('/auth/login', { username, password });
-      const { token, ...userData } = response.data;
+      const { token, ...raw } = response.data;
+      const userData = normalizeRole(raw);
 
       // Store token and user data
       localStorage.setItem('token', token);
@@ -64,7 +93,8 @@ export const AuthProvider = ({ children }) => {
     if (body?.pendingApproval) {
       return body;
     }
-    const { token, ...userData } = body;
+    const { token, ...raw } = body;
+    const userData = normalizeRole(raw);
     if (token) {
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(userData));

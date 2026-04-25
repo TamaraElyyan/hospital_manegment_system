@@ -14,16 +14,21 @@ public class HospitalManagementApplication {
         // Spring so DataSource auto-configuration can resolve spring.datasource.url.
         RenderDatabaseUrlMapper.applyFromEnvToSystemProperties();
         failIfPostgresProfileWithNoJdbcUrl();
+        String active = safeEnv("SPRING_PROFILES_ACTIVE");
+        if (StringUtils.hasText(active) && active.contains("postgres")) {
+            RenderDatabaseUrlMapper.preflightPostgresConnectionOrExit();
+        }
         SpringApplication app = new SpringApplication(HospitalManagementApplication.class);
         app.addListeners((ApplicationListener<ApplicationFailedEvent>) e -> {
             Throwable t = e.getException();
             System.err.println("========== Application failed to start ==========");
-            Throwable root = t;
-            while (root.getCause() != null && root.getCause() != root) {
-                root = root.getCause();
+            int depth = 0;
+            for (Throwable x = t; x != null && depth < 30; x = x.getCause(), depth++) {
+                if (x.getCause() == x) {
+                    break;
+                }
+                System.err.println("Cause[" + depth + "]: " + x.getClass().getName() + ": " + x.getMessage());
             }
-            System.err.println(
-                    "Root cause: " + root.getClass().getName() + ": " + root.getMessage());
             t.printStackTrace(System.err);
         });
         app.run(args);

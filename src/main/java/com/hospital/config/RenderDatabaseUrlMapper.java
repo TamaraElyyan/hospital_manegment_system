@@ -6,6 +6,9 @@ import org.springframework.util.StringUtils;
 
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -95,6 +98,58 @@ public final class RenderDatabaseUrlMapper {
         environment
                 .getPropertySources()
                 .addFirst(new MapPropertySource("renderDatabaseFromUrl", m));
+    }
+
+    /**
+     * One JDBC connection using the same URL/user/password Spring will use. Surfaces a plain
+     * {@link SQLException} (e.g. PSQLException with {@code FATAL: password authentication failed})
+     * before Hibernate, which can mask DB errors with HHH000342 / NPE in JdbcIsolationDelegate.
+     */
+    public static void preflightPostgresConnectionOrExit() {
+        if (Boolean.parseBoolean(safeEnv("HOSPITAL_SKIP_JDBC_PREFLIGHT"))) {
+            return;
+        }
+        String url = firstNonBlank(System.getProperty("spring.datasource.url"), safeEnv("SPRING_DATASOURCE_URL"));
+        if (!StringUtils.hasText(url) || !url.startsWith("jdbc:postgresql:")) {
+            return;
+        }
+        String user =
+                firstNonBlank(System.getProperty("spring.datasource.username"), safeEnv("SPRING_DATASOURCE_USERNAME"));
+        if (!StringUtils.hasText(user)) {
+            return;
+        }
+        String pass = resolvePassword();
+        try (Connection c = DriverManager.getConnection(url, user, pass)) {
+            c.isValid(5);
+        } catch (SQLException e) {
+            System.err.println(
+                    "========== JDBC preflight: PostgreSQL connection failed (driver error, not Hibernate) "
+                            + "==========");
+            System.err.println(e.getClass().getName() + ": " + e.getMessage());
+            e.printStackTrace(System.err);
+            System.err.println(
+                    "If using Render: ensure DATABASE_URL matches the linked database, remove stale"
+                            + " SPRING_DATASOURCE_PASSWORD/USERNAME, then redeploy.");
+            System.exit(1);
+        }
+    }
+
+    private static String resolvePassword() {
+        if (StringUtils.hasText(System.getProperty("spring.datasource.password"))) {
+            return System.getProperty("spring.datasource.password");
+        }
+        String p = safeEnv("SPRING_DATASOURCE_PASSWORD");
+        return p == null ? "" : p;
+    }
+
+    private static String firstNonBlank(String a, String b) {
+        if (StringUtils.hasText(a)) {
+            return a.trim();
+        }
+        if (b != null && StringUtils.hasText(b.trim())) {
+            return b.trim();
+        }
+        return "";
     }
 
     private static String safeEnv(String key) {

@@ -17,8 +17,8 @@ build/
 .env
 .env.local
 .env.production
+!frontend/.env.production
 .env.production.local
-frontend/.env.production
 frontend/.env.production.local
 .vite/
 *.local

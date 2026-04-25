@@ -3,6 +3,8 @@ package com.hospital;
 import com.hospital.config.RenderDatabaseUrlMapper;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.event.ApplicationFailedEvent;
+import org.springframework.context.ApplicationListener;
 import org.springframework.util.StringUtils;
 
 @SpringBootApplication
@@ -12,7 +14,12 @@ public class HospitalManagementApplication {
         // Spring so DataSource auto-configuration can resolve spring.datasource.url.
         RenderDatabaseUrlMapper.applyFromEnvToSystemProperties();
         failIfPostgresProfileWithNoJdbcUrl();
-        SpringApplication.run(HospitalManagementApplication.class, args);
+        SpringApplication app = new SpringApplication(HospitalManagementApplication.class);
+        app.addListeners((ApplicationListener<ApplicationFailedEvent>) e -> {
+            System.err.println("========== Application failed to start (root cause at bottom) ==========");
+            e.getException().printStackTrace(System.err);
+        });
+        app.run(args);
     }
 
     private static void failIfPostgresProfileWithNoJdbcUrl() {

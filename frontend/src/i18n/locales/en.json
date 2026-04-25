@@ -1,6 +1,7 @@
 {
   "app": {
     "title": "HealthHub",
+    "browserTitle": "HealthHub | Hospital Management",
     "chooseLanguage": "Choose language",
     "brandTagline": "Hospital management",
     "logout": "Log out",

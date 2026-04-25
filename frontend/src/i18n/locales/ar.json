@@ -1,6 +1,7 @@
 {
   "app": {
     "title": "HealthHub",
+    "browserTitle": "HealthHub | إدارة المستشفى",
     "chooseLanguage": "اختر اللغة",
     "brandTagline": "نظام إدارة المستشفى",
     "logout": "تسجيل الخروج",

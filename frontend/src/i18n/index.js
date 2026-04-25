@@ -10,7 +10,11 @@ function setDocumentLang(lng) {
   const html = document.documentElement;
   html.setAttribute("lang", lng);
   html.setAttribute("dir", lng === "ar" ? "rtl" : "ltr");
-  document.title = lng === "ar" ? "HealthHub" : "HealthHub";
+  try {
+    document.title = i18n.getFixedT(lng)("app.browserTitle");
+  } catch {
+    document.title = "HealthHub";
+  }
 }
 
 const stored =

@@ -20,7 +20,7 @@ public class HospitalManagementApplication {
         if (!StringUtils.hasText(profiles) || !profiles.contains("postgres")) {
             return;
         }
-        boolean fromEnv = StringUtils.hasText(safeEnv("SPRING_DATASOURCE_URL"));
+        boolean fromEnv = StringUtils.hasText(safeEnv("SPRING_DATASOURCE_URL").trim());
         boolean fromProp = StringUtils.hasText(System.getProperty("spring.datasource.url"));
         boolean haveDbUrl = StringUtils.hasText(safeEnv("DATABASE_URL"));
         if (fromEnv || fromProp) {

@@ -26,7 +26,9 @@ public final class RenderDatabaseUrlMapper {
      * Call from {@code public static void main} before {@link org.springframework.boot.SpringApplication#run}.
      */
     public static void applyFromEnvToSystemProperties() {
-        if (StringUtils.hasText(safeEnv("SPRING_DATASOURCE_URL"))) {
+        // Blank or whitespace-only should not block Render's DATABASE_URL (some dashboards set empty key)
+        String springEnv = safeEnv("SPRING_DATASOURCE_URL").trim();
+        if (StringUtils.hasText(springEnv)) {
             return;
         }
         String databaseUrl = safeEnv("DATABASE_URL");
@@ -45,9 +47,14 @@ public final class RenderDatabaseUrlMapper {
             return;
         }
         DatasourceProps d = p.get();
-        System.setProperty("spring.datasource.url", d.url());
+        String jdbc = d.url();
+        System.setProperty("spring.datasource.url", jdbc);
         System.setProperty("spring.datasource.username", d.username());
         System.setProperty("spring.datasource.password", d.password());
+        // Hibernate JPA can read these before/without DataSource metadata (Render, SSL, slow DB)
+        System.setProperty("hibernate.connection.url", jdbc);
+        System.setProperty("jakarta.persistence.jdbc.url", jdbc);
+        System.setProperty("javax.persistence.jdbc.url", jdbc);
     }
 
     private static String safeEnv(String key) {

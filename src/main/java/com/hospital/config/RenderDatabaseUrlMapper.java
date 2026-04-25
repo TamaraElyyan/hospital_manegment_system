@@ -1,9 +1,13 @@
 package com.hospital.config;
 
+import org.springframework.core.env.ConfigurableEnvironment;
+import org.springframework.core.env.MapPropertySource;
 import org.springframework.util.StringUtils;
 
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -55,6 +59,42 @@ public final class RenderDatabaseUrlMapper {
         System.setProperty("hibernate.connection.url", jdbc);
         System.setProperty("jakarta.persistence.jdbc.url", jdbc);
         System.setProperty("javax.persistence.jdbc.url", jdbc);
+    }
+
+    /**
+     * Puts {@code spring.datasource.*} (and JPA URL mirrors) at the <strong>front</strong> of the
+     * property source chain. That wins over {@code SPRING_DATASOURCE_PASSWORD} / similar env vars
+     * still set in the Render dashboard (a common cause of "password authentication failed" even
+     * when {@code DATABASE_URL} is correct).
+     */
+    public static void addAsHighestPriorityPropertySource(ConfigurableEnvironment environment) {
+        if (StringUtils.hasText(safeEnv("SPRING_DATASOURCE_URL").trim())) {
+            return;
+        }
+        String databaseUrl = environment.getProperty("DATABASE_URL");
+        if (databaseUrl == null) {
+            databaseUrl = safeEnv("DATABASE_URL");
+        }
+        if (!StringUtils.hasText(databaseUrl)) {
+            return;
+        }
+        String trimmed = databaseUrl.trim();
+        Optional<DatasourceProps> p = parsePostgresUrl(trimmed);
+        if (p.isEmpty()) {
+            return;
+        }
+        DatasourceProps d = p.get();
+        String jdbc = d.url();
+        Map<String, Object> m = new HashMap<>();
+        m.put("spring.datasource.url", jdbc);
+        m.put("spring.datasource.username", d.username());
+        m.put("spring.datasource.password", d.password());
+        m.put("hibernate.connection.url", jdbc);
+        m.put("jakarta.persistence.jdbc.url", jdbc);
+        m.put("javax.persistence.jdbc.url", jdbc);
+        environment
+                .getPropertySources()
+                .addFirst(new MapPropertySource("renderDatabaseFromUrl", m));
     }
 
     private static String safeEnv(String key) {

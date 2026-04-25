@@ -184,6 +184,25 @@ html[dir="rtl"] .auth-form-side {
   box-sizing: border-box;
   color: #1a1d24;
   text-align: start;
+  unicode-bidi: plaintext;
+}
+
+/* واجهة عربية: إدخال من اليمين: بدون dir="auto" (كان يعطي اتجاها خاطئاً) */
+html[dir="rtl"] .auth-form-side .input-with-icon input {
+  direction: rtl;
+}
+html[dir="rtl"] .auth-form-side .input-with-icon input[type="email"] {
+  direction: ltr; /* نطاقات البريد تبقى LTR */
+  text-align: start;
+}
+html[dir="ltr"] .auth-form-side .input-with-icon input {
+  direction: ltr;
+}
+html[dir="rtl"] .auth-form-side .register-select {
+  direction: rtl;
+}
+html[dir="ltr"] .auth-form-side .register-select {
+  direction: ltr;
 }
 
 .input-with-icon input::placeholder {
@@ -446,41 +465,32 @@ html[dir="rtl"] .auth-form-side {
   }
 }
 
-/* Mobile: form full width, illustration below */
+/* Tablet & mobile: لا تُعرض صورة التوضيح (لوجين / ريجستر) */
 @media (max-width: 768px) {
   .auth-page-container {
     flex-direction: column;
     min-height: 100dvh;
   }
 
-  .auth-form-side {
-    flex: 1;
-    max-width: 100%;
-    min-width: 0;
-    padding: 1.75rem 1.25rem 1.5rem;
-    justify-content: flex-start;
-    padding-top: clamp(2rem, 8vh, 3rem);
-  }
-
-  .auth-illustration-side {
-    flex: 0 0 auto;
-    min-height: 220px;
-    padding: 1rem 1.25rem 1.75rem;
-  }
-
-  .illustration-img {
-    max-height: 220px;
-  }
-}
-
-/* Very small — hide art to focus form */
-@media (max-width: 480px) {
   .auth-illustration-side {
     display: none;
   }
 
   .auth-form-side {
-    min-height: 100dvh;
+    flex: 1;
+    max-width: 100%;
+    min-width: 0;
+    width: 100%;
+    padding: 1.75rem 1.25rem 1.5rem;
     justify-content: center;
+    padding-top: clamp(2rem, 8vh, 3rem);
+    min-height: 100dvh;
+    min-height: 100svh;
+  }
+}
+
+@media (max-width: 480px) {
+  .auth-form-side {
+    padding: 1.5rem 1.1rem 1.25rem;
   }
 }

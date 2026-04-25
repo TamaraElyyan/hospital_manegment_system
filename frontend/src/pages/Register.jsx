@@ -106,7 +106,6 @@ export default function Register() {
               <div className="input-with-icon input-with-icon--end">
                 <input
                   id="reg-username"
-                  dir="auto"
                   value={form.username}
                   onChange={set("username")}
                   required
@@ -125,7 +124,6 @@ export default function Register() {
                 <input
                   id="reg-email"
                   type="email"
-                  dir="auto"
                   value={form.email}
                   onChange={set("email")}
                   required
@@ -145,7 +143,6 @@ export default function Register() {
                 <input
                   id="reg-password"
                   type="password"
-                  dir="auto"
                   value={form.password}
                   onChange={set("password")}
                   required
@@ -165,7 +162,6 @@ export default function Register() {
                 <input
                   id="reg-confirm-password"
                   type="password"
-                  dir="auto"
                   value={form.confirmPassword}
                   onChange={set("confirmPassword")}
                   required
@@ -186,7 +182,6 @@ export default function Register() {
               <div className="input-with-icon input-with-icon--end">
                 <input
                   id="reg-phone"
-                  dir="auto"
                   value={form.phone}
                   onChange={set("phone")}
                   required
@@ -203,7 +198,6 @@ export default function Register() {
               <div className="input-with-icon input-with-icon--end">
                 <input
                   id="reg-address"
-                  dir="auto"
                   value={form.address}
                   onChange={set("address")}
                   required
@@ -222,7 +216,6 @@ export default function Register() {
               <select
                 id="reg-role"
                 className="register-select"
-                dir="auto"
                 value={form.role}
                 onChange={set("role")}
                 required

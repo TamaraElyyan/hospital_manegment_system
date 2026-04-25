@@ -85,7 +85,6 @@ const Login = () => {
               <input
                 id="username"
                 type="text"
-                dir="auto"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 disabled={loading}
@@ -105,7 +104,6 @@ const Login = () => {
               <input
                 id="password"
                 type="password"
-                dir="auto"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 disabled={loading}

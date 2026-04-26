@@ -6,6 +6,9 @@ import { MdEmail, MdLock } from "react-icons/md";
 import LanguageSwitcher from "../components/LanguageSwitcher";
 import "./Auth.css";
 
+const TEST_ADMIN_USER = "admin";
+const TEST_ADMIN_PASSWORD = "admin123";
+
 const Login = () => {
   const { t } = useTranslation();
   const [username, setUsername] = useState("");
@@ -52,6 +55,12 @@ const Login = () => {
   const goRegister = () => navigate("/register");
   const handleForgotPassword = () => alert(t("auth.forgotPasswordAlert"));
 
+  const fillTestAdmin = () => {
+    setError("");
+    setUsername(TEST_ADMIN_USER);
+    setPassword(TEST_ADMIN_PASSWORD);
+  };
+
   return (
     <div className="auth-page-container">
       <div className="auth-form-side">
@@ -68,23 +77,6 @@ const Login = () => {
             <span className="logo-text">HealthHub</span>
           </div>
           <h3 className="login-intro">{t("auth.loginTitle")}</h3>
-        </div>
-
-        <div className="auth-admin-demo" role="region" aria-label={t("auth.adminDemoTitle")}>
-          <p className="auth-admin-demo__title">{t("auth.adminDemoTitle")}</p>
-          <div className="auth-admin-demo__row">
-            <span className="auth-admin-demo__label">{t("auth.userName")}</span>
-            <code className="auth-admin-demo__value" translate="no">
-              admin
-            </code>
-          </div>
-          <div className="auth-admin-demo__row">
-            <span className="auth-admin-demo__label">{t("auth.password")}</span>
-            <code className="auth-admin-demo__value" translate="no">
-              admin123
-            </code>
-          </div>
-          <p className="auth-admin-demo__note">{t("auth.adminDemoNote")}</p>
         </div>
 
         {import.meta.env.DEV && (
@@ -140,6 +132,18 @@ const Login = () => {
             >
               {t("auth.forgotPassword")}
             </button>
+          </div>
+
+          <div className="auth-test-row">
+            <button
+              type="button"
+              className="auth-test-fill"
+              onClick={fillTestAdmin}
+              disabled={loading}
+            >
+              {t("auth.loginAsTest")}
+            </button>
+            <p className="auth-test-hint">{t("auth.loginAsTestHint")}</p>
           </div>
 
           <button type="submit" className="login-button" disabled={loading}>

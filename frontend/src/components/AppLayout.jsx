@@ -187,16 +187,15 @@ export default function AppLayout() {
         </div>
       </header>
 
-      {menuOpen && (
-        <button
-          type="button"
-          className="app-sidebar-backdrop"
-          aria-label={t("app.closeOverlay")}
-          onClick={() => setMenuOpen(false)}
-        />
-      )}
-
       <div className="app-body">
+        {menuOpen && (
+          <button
+            type="button"
+            className="app-sidebar-backdrop"
+            aria-label={t("app.closeOverlay")}
+            onClick={() => setMenuOpen(false)}
+          />
+        )}
         <aside className={`app-sidebar ${menuOpen ? "app-sidebar--open" : ""}`}>
           <nav className="app-nav" aria-label={t("app.mainNav")}>
             <span className="app-nav-section-label">{t("nav.section")}</span>

@@ -366,6 +366,8 @@
   flex: 1;
   min-height: 0;
   position: relative;
+  z-index: 0;
+  isolation: isolate; /* backdrop + fixed sidebar stack above main, not under a sibling overlay */
 }
 
 .app-sidebar-backdrop {

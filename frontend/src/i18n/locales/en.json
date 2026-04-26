@@ -64,7 +64,9 @@
     "errorServer": "A server error occurred. Please try again in a few moments.",
     "errorNetwork": "Could not reach the server. Check your connection and that the app is running.",
     "errorBadRequest": "Invalid or incomplete data. Please review the form and try again.",
-    "devLoginHint": "Local demo: user admin — password admin123 (see server logs when DB is first created)."
+    "devLoginHint": "Local demo: user admin — password admin123 (see server logs when DB is first created).",
+    "adminDemoTitle": "Default administrator",
+    "adminDemoNote": "Only if the server created this user (first DB run). Change the password in production."
   },
   "roles": {
     "PATIENT": "Patient",

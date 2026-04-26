@@ -70,6 +70,23 @@ const Login = () => {
           <h3 className="login-intro">{t("auth.loginTitle")}</h3>
         </div>
 
+        <div className="auth-admin-demo" role="region" aria-label={t("auth.adminDemoTitle")}>
+          <p className="auth-admin-demo__title">{t("auth.adminDemoTitle")}</p>
+          <div className="auth-admin-demo__row">
+            <span className="auth-admin-demo__label">{t("auth.userName")}</span>
+            <code className="auth-admin-demo__value" translate="no">
+              admin
+            </code>
+          </div>
+          <div className="auth-admin-demo__row">
+            <span className="auth-admin-demo__label">{t("auth.password")}</span>
+            <code className="auth-admin-demo__value" translate="no">
+              admin123
+            </code>
+          </div>
+          <p className="auth-admin-demo__note">{t("auth.adminDemoNote")}</p>
+        </div>
+
         {import.meta.env.DEV && (
           <p className="auth-dev-hint" role="note">
             {t("auth.devLoginHint")}

@@ -140,7 +140,67 @@ html[dir="rtl"] .auth-form-side {
   text-align: center;
 }
 
-/* يظهر فقط في Vite dev — تلميح بيانات التجربة (لا يُبنى للإنتاج) */
+/* بيانات المدير الافتراضي (نفس الـ seed في DataInitializer) */
+.auth-admin-demo {
+  width: 100%;
+  max-width: 22rem;
+  align-self: center;
+  margin: 0.35rem 0 1rem;
+  padding: 0.9rem 1rem;
+  border-radius: 10px;
+  background: linear-gradient(145deg, #f0fdfa 0%, #e6fffa 100%);
+  border: 1px solid rgba(16, 146, 135, 0.28);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.8) inset;
+}
+
+.auth-admin-demo__title {
+  margin: 0 0 0.6rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--login-navy);
+  text-align: center;
+}
+
+.auth-admin-demo__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.4rem;
+  font-size: 0.85rem;
+}
+
+.auth-admin-demo__row:last-of-type {
+  margin-bottom: 0.35rem;
+}
+
+.auth-admin-demo__label {
+  color: var(--login-label);
+  font-weight: 500;
+  flex: 0 0 auto;
+}
+
+.auth-admin-demo__value {
+  font-family: ui-monospace, "Cascadia Code", "Segoe UI", monospace;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--login-teal-dark);
+  background: #fff;
+  padding: 0.2rem 0.45rem;
+  border-radius: 6px;
+  border: 1px solid rgba(16, 146, 135, 0.2);
+}
+
+.auth-admin-demo__note {
+  margin: 0.6rem 0 0;
+  font-size: 0.7rem;
+  line-height: 1.4;
+  color: var(--login-label);
+  text-align: center;
+  opacity: 0.92;
+}
+
+/* يظهر فقط في Vite dev — تلميح إضافي */
 .auth-dev-hint {
   font-size: 0.8rem;
   color: var(--login-label);

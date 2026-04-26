@@ -378,6 +378,77 @@ td.table-actions {
   }
 }
 
+/* أجهزة/لوحات: تقليل الفراغ الرأسي والهوامش (departments, patients, rooms, …) */
+@media (max-width: 1023px) {
+  .list-page-head,
+  .list-header {
+    margin-bottom: 0.85rem;
+    gap: 0.65rem;
+  }
+
+  .list-page-title,
+  .list-header h1,
+  .list-header h2 {
+    font-size: clamp(1.05rem, 3.2vw, 1.35rem);
+  }
+
+  .list-actions {
+    padding: 0.7rem 0.8rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .table-container {
+    border-radius: 12px;
+  }
+
+  .table-container th,
+  .table-container td {
+    padding: 0.6rem 0.55rem;
+    font-size: 0.86rem;
+  }
+
+  .search-input {
+    font-size: 0.95rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .list-page-head,
+  .list-header {
+    margin-bottom: 0.65rem;
+    gap: 0.5rem;
+  }
+
+  .list-actions {
+    padding: 0.55rem 0.6rem;
+    margin-bottom: 0.6rem;
+    border-radius: 12px;
+  }
+
+  .table-container th,
+  .table-container td {
+    padding: 0.5rem 0.45rem;
+    font-size: 0.82rem;
+  }
+
+  .add-btn,
+  .back-btn {
+    min-height: 2.5rem;
+    font-size: 0.86rem;
+  }
+
+  .modal-overlay {
+    padding: 0.6rem;
+    align-items: flex-start;
+    padding-top: max(0.6rem, env(safe-area-inset-top, 0px));
+  }
+
+  .modal {
+    padding: 1.1rem;
+    border-radius: 14px;
+  }
+}
+
 /* —— Users table: full width, scroll on small screens —— */
 .list-container--users {
   width: 100%;

@@ -338,3 +338,35 @@
     padding: 0 0.5rem;
   }
 }
+
+@media (max-width: 480px) {
+  .page-head {
+    margin-bottom: 0.85rem;
+  }
+
+  .page-title {
+    font-size: clamp(1.15rem, 4.5vw, 1.45rem);
+  }
+
+  .page-subtitle {
+    font-size: 0.88rem;
+  }
+
+  .dashboard-skeleton {
+    padding: 1.25rem 0.85rem;
+  }
+
+  .welcome-message {
+    padding: 1.35rem 1rem;
+  }
+
+  .stats-grid {
+    gap: 0.6rem;
+    margin-bottom: 1.1rem;
+  }
+
+  .stat-card {
+    padding: 0.85rem 0.95rem;
+    border-radius: 14px;
+  }
+}

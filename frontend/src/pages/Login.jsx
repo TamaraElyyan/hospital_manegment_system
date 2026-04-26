@@ -134,17 +134,14 @@ const Login = () => {
             </button>
           </div>
 
-          <div className="auth-test-row">
-            <button
-              type="button"
-              className="auth-test-fill"
-              onClick={fillTestAdmin}
-              disabled={loading}
-            >
-              {t("auth.loginAsTest")}
-            </button>
-            <p className="auth-test-hint">{t("auth.loginAsTestHint")}</p>
-          </div>
+          <button
+            type="button"
+            className="register-button auth-test-fill"
+            onClick={fillTestAdmin}
+            disabled={loading}
+          >
+            {t("auth.loginAsTest")}
+          </button>
 
           <button type="submit" className="login-button" disabled={loading}>
             {loading ? t("auth.loggingIn") : t("auth.loginNow")}

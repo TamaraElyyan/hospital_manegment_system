@@ -140,49 +140,10 @@ html[dir="rtl"] .auth-form-side {
   text-align: center;
 }
 
-/* زر «دخول تجريبي» — يملأ الحقول فقط */
-.auth-test-row {
-  width: 100%;
-  max-width: 22rem;
-  align-self: center;
-  margin: 0.15rem 0 0.85rem;
-  text-align: center;
-}
-
+/* فاصل بسيط قبل «تسجيل الدخول» الرئيسي (زر الدخول التجريبي = نمط register-button) */
 .auth-test-fill {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  min-height: 44px;
-  padding: 0.5rem 1rem;
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--login-teal-dark);
-  background: #fff;
-  border: 2px dashed rgba(16, 146, 135, 0.45);
-  border-radius: 10px;
-  cursor: pointer;
-  transition: background 0.15s, border-color 0.15s;
-}
-
-.auth-test-fill:hover:not(:disabled) {
-  background: #f0fdfa;
-  border-color: var(--login-teal);
-  color: var(--login-navy);
-}
-
-.auth-test-fill:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.auth-test-hint {
-  margin: 0.45rem 0 0;
-  font-size: 0.7rem;
-  line-height: 1.4;
-  color: var(--login-label);
-  opacity: 0.9;
+  margin-top: 0.15rem;
+  margin-bottom: 0.35rem;
 }
 
 /* يظهر فقط في Vite dev — تلميح إضافي */

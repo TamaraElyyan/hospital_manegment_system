@@ -65,8 +65,7 @@
     "errorNetwork": "Could not reach the server. Check your connection and that the app is running.",
     "errorBadRequest": "Invalid or incomplete data. Please review the form and try again.",
     "devLoginHint": "Local demo: user admin — password admin123 (see server logs when DB is first created).",
-    "loginAsTest": "Login as test",
-    "loginAsTestHint": "Fills admin / admin123 — then press Sign in (if seeded on the server)."
+    "loginAsTest": "Login as test"
   },
   "roles": {
     "PATIENT": "Patient",

@@ -94,12 +94,19 @@ export default function AppLayout() {
     navigate("/login");
   };
 
+  const userRole =
+    user?.role == null
+      ? undefined
+      : typeof user.role === "string"
+        ? user.role
+        : user.role?.name;
+
   const items = useMemo(
     () =>
-      NAV_DEF.filter((item) => !item.roles || item.roles.includes(user.role)).map(
+      NAV_DEF.filter((item) => !item.roles || (userRole && item.roles.includes(userRole))).map(
         (item) => ({ ...item, label: t(item.labelKey) })
       ),
-    [user.role, t]
+    [userRole, t]
   );
   const displayName = (user?.fullName || user?.username || "").trim() || t("app.userFallback");
   const avatarLetter = displayName.charAt(0).toUpperCase();

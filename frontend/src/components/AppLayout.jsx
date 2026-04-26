@@ -83,10 +83,26 @@ export default function AppLayout() {
   }, [userMenuOpen]);
 
   useEffect(() => {
-    document.body.style.overflow = menuOpen ? "hidden" : "";
+    if (menuOpen) {
+      document.body.style.overflow = "hidden";
+      document.documentElement.style.overflowX = "hidden";
+    } else {
+      document.body.style.overflow = "";
+      document.documentElement.style.overflowX = "";
+    }
     return () => {
       document.body.style.overflow = "";
+      document.documentElement.style.overflowX = "";
     };
+  }, [menuOpen]);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onKey = (e) => {
+      if (e.key === "Escape") setMenuOpen(false);
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
   }, [menuOpen]);
 
   const handleLogout = () => {

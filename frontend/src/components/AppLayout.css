@@ -528,25 +528,31 @@
     height: 100svh;
     padding: max(4.75rem, calc(env(safe-area-inset-top, 0px) + 3.5rem)) 0.5rem
       max(1rem, env(safe-area-inset-bottom, 0px)) 0.45rem;
-    transform: translateX(-100%);
+    /* LTR: مخبأ يسار (translate3d يقلل الاهتزاز على الموبايل) */
+    transform: translate3d(-100%, 0, 0);
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: 4px 0 32px -8px rgba(15, 23, 42, 0.15);
     border-inline-end: 1px solid rgba(226, 232, 240, 0.95);
     overflow-y: auto;
+    overflow-x: hidden;
     overscroll-behavior: contain;
+    overscroll-behavior-x: none;
+    touch-action: pan-y;
     -webkit-overflow-scrolling: touch;
   }
 
-  /* RTL: drawer from the end edge */
+  /* RTL: الدرج من اليمين — نفس الـ specificity لـ :open مهم (انظر أدناه) */
   [dir="rtl"] .app-sidebar {
     inset-inline-start: auto;
     inset-inline-end: 0;
-    transform: translateX(100%);
+    transform: translate3d(100%, 0, 0);
     box-shadow: -4px 0 32px -8px rgba(15, 23, 42, 0.15);
   }
 
-  .app-sidebar--open {
-    transform: translateX(0) !important;
+  /* فتح: لازم يتغلب على [dir=rtl] .app-sidebar (0,1,1) — لذلك نضيف [dir=rtl] هنا */
+  .app-sidebar--open,
+  [dir="rtl"] .app-sidebar--open {
+    transform: translate3d(0, 0, 0) !important;
   }
 
   .app-nav-item {

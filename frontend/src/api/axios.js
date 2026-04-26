@@ -1,13 +1,33 @@
 import axios from "axios";
 
+/** Must be absolute https?:// — matches frontend/.env.production when a host omits VITE at build. */
+const PRODUCTION_API_ORIGIN = "https://hospital-api-production-d897.up.railway.app";
+
 function resolveApiBaseURL() {
-  const env = import.meta.env.VITE_API_URL;
-  if (env && String(env).trim()) {
-    return `${String(env).replace(/\/$/, "")}/api`;
+  const raw = import.meta.env.VITE_API_URL;
+  const env = raw != null ? String(raw).trim() : "";
+
+  if (env) {
+    const base = env.replace(/\/$/, "");
+    if (/^https?:\/\//i.test(base)) {
+      return `${base}/api`;
+    }
+    // A relative value (e.g. "/") makes axios hit the static host (Render) → 404 on /api/*
+    if (import.meta.env.PROD) {
+      console.warn(
+        "[api] VITE_API_URL is not an absolute URL; using PRODUCTION_API_ORIGIN. Set VITE_API_URL in the host (e.g. Render) to your API (https://...), no /api suffix."
+      );
+      return `${PRODUCTION_API_ORIGIN}/api`;
+    }
+    return `${base}/api`;
   }
+
   // Dev: same-origin /api so Vite proxy runs (works with http://<LAN-IP>:5000, not only localhost).
   if (import.meta.env.DEV) {
     return "/api";
+  }
+  if (import.meta.env.PROD) {
+    return `${PRODUCTION_API_ORIGIN}/api`;
   }
   return "http://localhost:8080/api";
 }

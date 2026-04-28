@@ -541,10 +541,8 @@
     -webkit-overflow-scrolling: touch;
   }
 
-  /* RTL: الدرج من اليمين — نفس الـ specificity لـ :open مهم (انظر أدناه) */
+  /* RTL: بداية السطر = اليمين؛ inset-inline-start:0 يثبت الدرج عند زر القائمة (لا تستخدم inset-inline-end فهي = اليسار) */
   [dir="rtl"] .app-sidebar {
-    inset-inline-start: auto;
-    inset-inline-end: 0;
     transform: translate3d(100%, 0, 0);
     box-shadow: -4px 0 32px -8px rgba(15, 23, 42, 0.15);
   }

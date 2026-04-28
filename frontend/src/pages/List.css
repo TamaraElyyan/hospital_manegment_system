@@ -371,6 +371,13 @@ td.table-actions {
     align-items: stretch;
   }
 
+  /* عموديًا: 1 1 200px يجعل الأساس 200px على المحور الرأسي = فراغ ضخم تحت العنوان */
+  .list-page-title,
+  .list-header h1,
+  .list-header h2 {
+    flex: 0 0 auto;
+  }
+
   .add-btn,
   .back-btn {
     width: 100%;
